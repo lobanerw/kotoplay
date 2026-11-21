@@ -1,0 +1,1162 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>КотоPlay — Мини онлайн игры</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+    --bg: #1d120d;
+    --panel: #321e14;
+    --panel2: #402517;
+    --orange: #ff963f;
+    --orange2: #ff852b;
+    --text: #fff1e5;
+    --muted: #c9a58b;
+    --border: #694027;
+    --green: #76d69a;
+    --red: #ff7777;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, sans-serif;
+}
+
+header {
+    min-height: 70px;
+    padding: 14px 5%;
+    background: #321b10;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.logo {
+    color: var(--orange);
+    font-size: 27px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.header-links {
+    display: flex;
+    gap: 18px;
+}
+
+.header-links a {
+    color: #ffe0c4;
+    text-decoration: none;
+}
+
+.header-links a:hover { color: var(--orange); }
+
+main {
+    max-width: 1100px;
+    margin: auto;
+    padding: 25px 16px 60px;
+}
+
+h1 { font-size: 32px; margin: 10px 0; }
+h2 { margin-top: 0; }
+
+.muted { color: var(--muted); }
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 18px 0;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin: 7px 0 14px;
+    color: white;
+    background: #21140e;
+    border: 1px solid #80502f;
+    border-radius: 9px;
+    font-size: 15px;
+}
+
+button {
+    border: 0;
+    border-radius: 9px;
+    padding: 12px 18px;
+    background: var(--orange2);
+    color: #29160c;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: .15s;
+}
+
+button:hover {
+    background: #ffad65;
+    transform: translateY(-1px);
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.secondary {
+    background: #57331f;
+    color: #ffe6d2;
+    border: 1px solid #89532e;
+}
+
+.secondary:hover { background: #704329; }
+
+.danger {
+    background: #73302a;
+    color: white;
+}
+
+.hidden { display: none !important; }
+
+.profile-row {
+    display: grid;
+    grid-template-columns: 1fr 150px;
+    gap: 12px;
+}
+
+.color-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 8px 0 15px;
+}
+
+.color-choice {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 3px solid transparent;
+    border-radius: 50%;
+}
+
+.color-choice.selected { border-color: white; }
+
+.room {
+    background: #27170f;
+    border: 1px solid #694027;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 12px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.room-name { font-weight: bold; }
+.room small { color: var(--muted); }
+
+.status {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    background: #54351f;
+    color: #ffd0a5;
+}
+
+.status.online {
+    background: #204a32;
+    color: #9bf0b8;
+}
+
+.game-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.game-board {
+    margin: 22px auto;
+    max-width: 520px;
+}
+
+.big-message {
+    text-align: center;
+    color: var(--orange);
+    font-size: 20px;
+    font-weight: bold;
+    min-height: 30px;
+    margin: 15px 0;
+}
+
+.choice-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.choice {
+    min-width: 95px;
+    min-height: 85px;
+    font-size: 36px;
+}
+
+.grid {
+    display: grid;
+    gap: 5px;
+    justify-content: center;
+}
+
+.cell {
+    width: 58px;
+    height: 58px;
+    padding: 0;
+    background: #4b2c1b;
+    color: white;
+    font-size: 25px;
+    border: 1px solid #88532f;
+}
+
+.cell:disabled {
+    opacity: 1;
+    color: white;
+}
+
+.matches {
+    text-align: center;
+    font-size: 25px;
+    line-height: 2;
+    letter-spacing: 5px;
+    overflow-wrap: anywhere;
+}
+
+.dot-board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    max-width: 420px;
+    margin: auto;
+}
+
+.dot-cell {
+    aspect-ratio: 1;
+    background: #3e281b;
+    border: 1px solid #80502f;
+    color: var(--orange);
+    font-size: 12px;
+    padding: 3px;
+}
+
+.dot-cell.used {
+    background: #a85d2b;
+    color: white;
+}
+
+.battle-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 42px);
+    gap: 4px;
+    justify-content: center;
+}
+
+.battle-cell {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    font-size: 17px;
+    background: #25465a;
+    color: white;
+    border: 1px solid #4b7893;
+}
+
+.battle-cell.hit { background: #a34335; }
+.battle-cell.miss { background: #53636e; }
+
+footer {
+    text-align: center;
+    color: #98745c;
+    padding: 25px;
+    border-top: 1px solid var(--border);
+}
+
+@media(max-width: 600px) {
+    h1 { font-size: 26px; }
+    .profile-row { grid-template-columns: 1fr; }
+    .cell { width: 48px; height: 48px; }
+    .battle-grid { grid-template-columns: repeat(6, 38px); }
+    .battle-cell { width: 38px; height: 38px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <a class="logo" href="./">🐱 КотоPlay</a>
+    <div class="header-links">
+        <a href="./">Главная</a>
+        <a href="games.html">Игры</a>
+    </div>
+</header>
+
+<main>
+    <section id="lobbyScreen">
+        <h1>🎮 Мини онлайн игры</h1>
+        <p class="muted">Создавай комнаты, приглашай игроков и играй!</p>
+
+        <div class="panel">
+            <h2>👤 Твой профиль</h2>
+
+            <div class="profile-row">
+                <div>
+                    <label for="nickname">Твой ник</label>
+                    <input id="nickname" maxlength="20" placeholder="Например, Котик">
+                </div>
+                <div>
+                    <label for="gender">Обращение</label>
+                    <select id="gender">
+                        <option value="Он">Он</option>
+                        <option value="Она">Она</option>
+                    </select>
+                </div>
+            </div>
+
+            <label>Цвет игрока</label>
+            <div class="color-row" id="colorChoices">
+                <button class="color-choice selected" data-color="#ff963f" style="background:#ff963f"></button>
+                <button class="color-choice" data-color="#55b9ff" style="background:#55b9ff"></button>
+                <button class="color-choice" data-color="#75d68a" style="background:#75d68a"></button>
+                <button class="color-choice" data-color="#d68aff" style="background:#d68aff"></button>
+                <button class="color-choice" data-color="#ff6f91" style="background:#ff6f91"></button>
+                <button class="color-choice" data-color="#ffe36a" style="background:#ffe36a"></button>
+            </div>
+
+            <button id="saveProfile">Сохранить профиль</button>
+            <span id="profileMessage" class="muted"></span>
+        </div>
+
+        <div class="panel">
+            <h2>➕ Создать комнату</h2>
+            <p class="muted">Выбери игру. После создания комната появится в общем лобби.</p>
+
+            <label for="newGame">Игра</label>
+            <select id="newGame">
+                <option value="rps">Камень, ножницы, бумага</option>
+                <option value="dots">Палки и квадраты</option>
+                <option value="tic">Крестики-нолики 5×5</option>
+                <option value="battle">Морской бой</option>
+                <option value="matches">Спички</option>
+            </select>
+
+            <button id="createRoom">Создать комнату</button>
+            <span id="createMessage" class="muted"></span>
+        </div>
+
+        <div class="panel">
+            <div class="game-top">
+                <div>
+                    <h2>🚪 Кто зовёт играть?</h2>
+                    <p class="muted">Открытые комнаты других игроков</p>
+                </div>
+                <button class="secondary" id="refreshRooms">Обновить</button>
+            </div>
+            <div id="roomsList">
+                <p class="muted">Загружаем комнаты...</p>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>🤖 Играть с ботом</h2>
+            <p class="muted">Можно начать игру прямо сейчас, даже если других игроков нет.</p>
+            <select id="botGame">
+                <option value="rps">Камень, ножницы, бумага</option>
+                <option value="dots">Палки и квадраты</option>
+                <option value="tic">Крестики-нолики 5×5</option>
+                <option value="battle">Морской бой</option>
+                <option value="matches">Спички</option>
+            </select>
+            <button id="startBot">Играть с ботом</button>
+        </div>
+    </section>
+
+    <section id="gameScreen" class="hidden">
+        <div class="panel">
+            <div class="game-top">
+                <button class="secondary" id="backLobby">← В лобби</button>
+                <span class="status online">Игра</span>
+            </div>
+            <h1 id="gameTitle">Игра</h1>
+            <p id="gameDescription" class="muted"></p>
+            <div id="gameArea"></div>
+        </div>
+    </section>
+</main>
+
+<footer>🐱 КотоPlay · Мини онлайн игры</footer>
+
+<script>
+// ==========================================
+// SUPABASE — ВСТАВЬ СВОЙ PUBLISHABLE KEY
+// ==========================================
+
+const SUPABASE_URL = "https://wrziasmcufzmwjlnlnbs.supabase.co";
+const SUPABASE_KEY = "ВСТАВЬ_СЮДА_СВОЙ_sb_publishable_КЛЮЧ";
+
+let db = null;
+
+if (window.supabase && SUPABASE_KEY.startsWith("sb_publishable_")) {
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+// ==========================================
+// ПРОФИЛЬ
+// ==========================================
+
+const gameNames = {
+    rps: "Камень, ножницы, бумага",
+    dots: "Палки и квадраты",
+    tic: "Крестики-нолики 5×5",
+    battle: "Морской бой",
+    matches: "Спички"
+};
+
+let playerColor = "#ff963f";
+let nickname = localStorage.getItem("kplay_nickname") || "";
+let gender = localStorage.getItem("kplay_gender") || "Он";
+
+const nicknameInput = document.getElementById("nickname");
+const genderInput = document.getElementById("gender");
+
+nicknameInput.value = nickname;
+genderInput.value = gender;
+
+document.querySelectorAll(".color-choice").forEach(button => {
+    button.addEventListener("click", () => {
+        document.querySelectorAll(".color-choice").forEach(x => x.classList.remove("selected"));
+        button.classList.add("selected");
+        playerColor = button.dataset.color;
+        localStorage.setItem("kplay_color", playerColor);
+    });
+});
+
+const savedColor = localStorage.getItem("kplay_color");
+if (savedColor) {
+    playerColor = savedColor;
+    document.querySelectorAll(".color-choice").forEach(button => {
+        button.classList.toggle("selected", button.dataset.color === savedColor);
+    });
+}
+
+function saveProfile() {
+    nickname = nicknameInput.value.trim();
+    gender = genderInput.value;
+
+    if (!nickname) {
+        document.getElementById("profileMessage").textContent = " Введи ник!";
+        return false;
+    }
+
+    localStorage.setItem("kplay_nickname", nickname);
+    localStorage.setItem("kplay_gender", gender);
+    localStorage.setItem("kplay_color", playerColor);
+
+    document.getElementById("profileMessage").textContent = " ✓ Сохранено!";
+    return true;
+}
+
+document.getElementById("saveProfile").onclick = saveProfile;
+
+// ==========================================
+// SUPABASE И КОМНАТЫ
+// ==========================================
+
+let currentRoom = null;
+let roomSubscription = null;
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+function showDatabaseError(error) {
+    console.error(error);
+    return error?.message || "Не удалось выполнить запрос.";
+}
+
+async function loadRooms() {
+    const list = document.getElementById("roomsList");
+
+    if (!db) {
+        list.innerHTML = '<p class="muted">Сначала вставь Publishable key Supabase в код страницы.</p>';
+        return;
+    }
+
+    list.innerHTML = '<p class="muted">Загружаем комнаты...</p>';
+
+    const { data, error } = await db
+        .from("game_rooms")
+        .select("*")
+        .eq("status", "waiting")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        list.innerHTML = '<p class="muted">Ошибка загрузки: ' + escapeHTML(showDatabaseError(error)) + '</p>';
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        list.innerHTML = '<p class="muted">Пока никто не создал комнату. Будь первым!</p>';
+        return;
+    }
+
+    list.innerHTML = "";
+
+    data.forEach(room => {
+        const players = Array.isArray(room.players) ? room.players : [];
+
+        const item = document.createElement("div");
+        item.className = "room";
+
+        const info = document.createElement("div");
+        info.innerHTML =
+            '<div class="room-name">' + escapeHTML(room.nickname) + '</div>' +
+            '<small>' + escapeHTML(gameNames[room.game] || room.game) + '</small><br>' +
+            '<small>Игроков: ' + players.length + '/2</small>';
+
+        const join = document.createElement("button");
+        join.textContent = "Играть";
+        join.disabled = players.length >= 2;
+        join.onclick = () => joinRoom(room);
+
+        item.append(info, join);
+        list.appendChild(item);
+    });
+}
+
+document.getElementById("refreshRooms").onclick = loadRooms;
+
+document.getElementById("createRoom").onclick = async () => {
+    if (!saveProfile()) return;
+
+    const message = document.getElementById("createMessage");
+
+    if (!db) {
+        message.textContent = " Supabase не настроен.";
+        return;
+    }
+
+    message.textContent = " Создаём...";
+
+    const game = document.getElementById("newGame").value;
+
+    const { data, error } = await db
+        .from("game_rooms")
+        .insert({
+            nickname,
+            player_color: playerColor,
+            game,
+            status: "waiting",
+            players: [{
+                nickname,
+                color: playerColor
+            }],
+            game_state: {}
+        })
+        .select()
+        .single();
+
+    if (error) {
+        message.textContent = " Ошибка: " + showDatabaseError(error);
+        return;
+    }
+
+    message.textContent = " Комната создана!";
+    await loadRooms();
+};
+
+async function joinRoom(room) {
+    if (!saveProfile()) return;
+
+    const players = Array.isArray(room.players) ? [...room.players] : [];
+
+    if (players.some(p => p.nickname === nickname)) {
+        alert("Ты уже находишься в этой комнате.");
+        return;
+    }
+
+    if (players.length >= 2) {
+        alert("Комната уже заполнена.");
+        loadRooms();
+        return;
+    }
+
+    players.push({
+        nickname,
+        color: playerColor
+    });
+
+    const { data, error } = await db
+        .from("game_rooms")
+        .update({
+            players,
+            status: "playing"
+        })
+        .eq("id", room.id)
+        .eq("status", "waiting")
+        .select()
+        .maybeSingle();
+
+    if (error) {
+        alert("Не удалось войти: " + showDatabaseError(error));
+        return;
+    }
+
+    if (!data) {
+        alert("Кто-то уже занял эту комнату. Обнови список.");
+        loadRooms();
+        return;
+    }
+
+    alert("Ты присоединился к комнате! Игровые ходы между игроками пока не подключены. Можешь запустить эту игру против бота.");
+    currentRoom = data;
+    loadRooms();
+}
+
+// Подписка на изменения списка комнат
+if (db) {
+    db.channel("kotoplay-room-list")
+        .on("postgres_changes", {
+            event: "*",
+            schema: "public",
+            table: "game_rooms"
+        }, loadRooms)
+        .subscribe();
+
+    loadRooms();
+}
+
+// ==========================================
+// ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ
+// ==========================================
+
+const lobbyScreen = document.getElementById("lobbyScreen");
+const gameScreen = document.getElementById("gameScreen");
+const gameArea = document.getElementById("gameArea");
+
+let activeGame = "";
+
+function showGame(title, description) {
+    lobbyScreen.classList.add("hidden");
+    gameScreen.classList.remove("hidden");
+    document.getElementById("gameTitle").textContent = title;
+    document.getElementById("gameDescription").textContent = description;
+}
+
+function backToLobby() {
+    if (roomSubscription && db) {
+        db.removeChannel(roomSubscription);
+        roomSubscription = null;
+    }
+
+    gameScreen.classList.add("hidden");
+    lobbyScreen.classList.remove("hidden");
+    loadRooms();
+}
+
+document.getElementById("backLobby").onclick = backToLobby;
+
+document.getElementById("startBot").onclick = () => {
+    if (!saveProfile()) return;
+    startGame(document.getElementById("botGame").value);
+};
+
+function startGame(game) {
+    activeGame = game;
+
+    if (game === "rps") startRPS();
+    if (game === "dots") startDots();
+    if (game === "tic") startTic();
+    if (game === "battle") startBattle();
+    if (game === "matches") startMatches();
+}
+
+// ==========================================
+// 1. КАМЕНЬ, НОЖНИЦЫ, БУМАГА
+// ==========================================
+
+function startRPS() {
+    showGame("✊ Камень, ножницы, бумага", "Выбери один из трёх вариантов!");
+
+    gameArea.innerHTML = `
+        <div class="big-message" id="rpsMessage">Твой ход!</div>
+        <div class="choice-row">
+            <button class="choice" data-rps="0">✊</button>
+            <button class="choice" data-rps="1">✌️</button>
+            <button class="choice" data-rps="2">✋</button>
+        </div>
+        <div class="big-message" id="rpsResult"></div>
+        <p class="muted" style="text-align:center" id="rpsScore">Ты: 0 · Бот: 0 · Ничьи: 0</p>
+    `;
+
+    let userScore = 0, botScore = 0, draws = 0;
+    const names = ["Камень", "Ножницы", "Бумага"];
+    const icons = ["✊", "✌️", "✋"];
+
+    document.querySelectorAll("[data-rps]").forEach(button => {
+        button.onclick = () => {
+            const user = Number(button.dataset.rps);
+            const bot = Math.floor(Math.random() * 3);
+
+            let result = "";
+
+            if (user === bot) {
+                result = "Ничья!";
+                draws++;
+            } else if ((user - bot + 3) % 3 === 2) {
+                result = "Ты выиграл раунд!";
+                userScore++;
+            } else {
+                result = "Бот выиграл раунд!";
+                botScore++;
+            }
+
+            document.getElementById("rpsMessage").textContent =
+                names[user] + " против " + names[bot];
+
+            document.getElementById("rpsResult").textContent =
+                icons[user] + "  " + result + "  " + icons[bot];
+
+            document.getElementById("rpsScore").textContent =
+                `Ты: ${userScore} · Бот: ${botScore} · Ничьи: ${draws}`;
+        };
+    });
+}
+
+// ==========================================
+// 2. ПАЛКИ И КВАДРАТЫ
+// ==========================================
+
+function startDots() {
+    showGame("📐 Палки и квадраты", "Соединяй соседние точки. Замкнул квадрат — получи очко и дополнительный ход.");
+
+    const size = 4;
+    let edges = new Set();
+    let scores = [0, 0];
+    let turn = 0;
+    let locked = false;
+
+    function edgeId(type, r, c) {
+        return type + "-" + r + "-" + c;
+    }
+
+    function boxEdges(r, c) {
+        return [
+            edgeId("h", r, c),
+            edgeId("h", r + 1, c),
+            edgeId("v", r, c),
+            edgeId("v", r, c + 1)
+        ];
+    }
+
+    function completedBoxes() {
+        let count = 0;
+        for (let r = 0; r < size; r++) {
+            for (let c = 0; c < size; c++) {
+                if (boxEdges(r, c).every(id => edges.has(id))) count++;
+            }
+        }
+        return count;
+    }
+
+    function render() {
+        let html = `
+            <div class="big-message">Ты: ${scores[0]} · Бот: ${scores[1]}</div>
+            <p style="text-align:center">Ход: ${turn === 0 ? "Ты" : "Бот"}</p>
+            <div class="dot-board">
+        `;
+
+        for (let r = 0; r < size; r++) {
+            for (let c = 0; c < size; c++) {
+                const id = edgeId("h", r, c);
+                html += `<button class="dot-cell ${edges.has(id) ? "used" : ""}" data-edge="${id}">${edges.has(id) ? "━" : "·"}</button>`;
+            }
+        }
+
+        html += `</div>
+        <div style="text-align:center;margin-top:15px">
+            <button class="secondary" id="dotsReset">Новая партия</button>
+        </div>`;
+
+        gameArea.innerHTML = html;
+
+        gameArea.querySelectorAll("[data-edge]").forEach(button => {
+            button.onclick = () => {
+                if (turn !== 0 || locked || edges.has(button.dataset.edge)) return;
+                makeMove(button.dataset.edge, 0);
+            };
+        });
+
+        document.getElementById("dotsReset").onclick = startDots;
+    }
+
+    function allEdges() {
+        let arr = [];
+        for (let r = 0; r <= size; r++)
+            for (let c = 0; c < size; c++)
+                arr.push(edgeId("h", r, c));
+
+        for (let r = 0; r < size; r++)
+            for (let c = 0; c <= size; c++)
+                arr.push(edgeId("v", r, c));
+
+        return arr.filter(id => !edges.has(id));
+    }
+
+    function boxesBefore() {
+        return completedBoxes();
+    }
+
+    function makeMove(id, player) {
+        const before = boxesBefore();
+        edges.add(id);
+        const after = boxesBefore();
+        const got = after - before;
+
+        if (got > 0) scores[player] += got;
+        else turn = 1 - turn;
+
+        render();
+
+        if (edges.size === (size + 1) * size * 2) {
+            document.querySelector(".big-message").textContent =
+                scores[0] > scores[1] ? "Ты победил!" :
+                scores[0] < scores[1] ? "Победил бот!" : "Ничья!";
+            return;
+        }
+
+        if (turn === 1) {
+            locked = true;
+            setTimeout(botMove, 600);
+        } else {
+            locked = false;
+        }
+    }
+
+    function botMove() {
+        const options = allEdges();
+        if (!options.length) return;
+
+        let selected = null;
+
+        // Бот старается закрыть квадрат, если это возможно.
+        for (const id of options) {
+            const before = completedBoxes();
+            edges.add(id);
+            const after = completedBoxes();
+            edges.delete(id);
+
+            if (after > before) {
+                selected = id;
+                break;
+            }
+        }
+
+        if (!selected) selected = options[Math.floor(Math.random() * options.length)];
+
+        makeMove(selected, 1);
+    }
+
+    render();
+}
+
+// ==========================================
+// 3. КРЕСТИКИ-НОЛИКИ 5×5, ЧЕТЫРЕ В РЯД
+// ==========================================
+
+function startTic() {
+    showGame("❌ Крестики-нолики 5×5", "Собери четыре своих символа подряд по горизонтали, вертикали или диагонали.");
+
+    let board = Array(25).fill("");
+    let finished = false;
+
+    function winner(b, symbol) {
+        const directions = [[0,1], [1,0], [1,1], [1,-1]];
+
+        for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < 5; c++) {
+                if (b[r * 5 + c] !== symbol) continue;
+
+                for (const [dr, dc] of directions) {
+                    let count = 1;
+
+                    for (let k = 1; k < 4; k++) {
+                        const nr = r + dr * k;
+                        const nc = c + dc * k;
+
+                        if (nr < 0 || nr >= 5 || nc < 0 || nc >= 5) break;
+                        if (b[nr * 5 + nc] !== symbol) break;
+                        count++;
+                    }
+
+                    if (count >= 4) return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function render(message = "Твой ход — X") {
+        gameArea.innerHTML = `
+            <div class="big-message" id="ticMessage">${message}</div>
+            <div class="grid" style="grid-template-columns:repeat(5,58px)" id="ticBoard">
+                ${board.map((v,i) => `<button class="cell" data-cell="${i}" ${v || finished ? "disabled" : ""}>${v}</button>`).join("")}
+            </div>
+            <div style="text-align:center;margin-top:18px">
+                <button class="secondary" id="ticReset">Новая партия</button>
+            </div>
+        `;
+
+        gameArea.querySelectorAll("[data-cell]").forEach(button => {
+            button.onclick = () => playerMove(Number(button.dataset.cell));
+        });
+
+        document.getElementById("ticReset").onclick = startTic;
+    }
+
+    function playerMove(index) {
+        if (finished || board[index]) return;
+
+        board[index] = "X";
+
+        if (winner(board, "X")) {
+            finished = true;
+            render("Ты победил! 🎉");
+            return;
+        }
+
+        if (board.every(Boolean)) {
+            finished = true;
+            render("Ничья!");
+            return;
+        }
+
+        render("Бот думает...");
+        setTimeout(botMove, 450);
+    }
+
+    function botMove() {
+        if (finished) return;
+
+        let move = findWinningMove("O") ?? findWinningMove("X");
+
+        if (move === null) {
+            const empty = board.map((v,i) => v ? -1 : i).filter(i => i >= 0);
+            move = empty[Math.floor(Math.random() * empty.length)];
+        }
+
+        if (move === undefined) return;
+
+        board[move] = "O";
+
+        if (winner(board, "O")) {
+            finished = true;
+            render("Бот победил!");
+        } else if (board.every(Boolean)) {
+            finished = true;
+            render("Ничья!");
+        } else {
+            render("Твой ход — X");
+        }
+    }
+
+    function findWinningMove(symbol) {
+        for (let i = 0; i < 25; i++) {
+            if (board[i]) continue;
+            board[i] = symbol;
+            const won = winner(board, symbol);
+            board[i] = "";
+            if (won) return i;
+        }
+        return null;
+    }
+
+    render();
+}
+
+// ==========================================
+// 4. МОРСКОЙ БОЙ
+// ==========================================
+
+function startBattle() {
+    showGame("🚢 Морской бой", "Найди корабль бота! Поле 6×6. Корабли размещаются случайно.");
+
+    const N = 6;
+    let enemy = Array(N * N).fill(0);
+    let shots = Array(N * N).fill(0);
+    let hits = 0;
+    let finished = false;
+
+    // Один корабль длиной 3 клетки.
+    function placeShip() {
+        let horizontal = Math.random() < 0.5;
+        let r = Math.floor(Math.random() * (horizontal ? N : N - 2));
+        let c = Math.floor(Math.random() * (horizontal ? N - 2 : N));
+
+        for (let k = 0; k < 3; k++) {
+            enemy[(r + (horizontal ? 0 : k)) * N + c + (horizontal ? k : 0)] = 1;
+        }
+    }
+
+    placeShip();
+
+    function render(message = "Выбирай клетку!") {
+        gameArea.innerHTML = `
+            <div class="big-message">${message}</div>
+            <p style="text-align:center">Попаданий: ${hits}/3</p>
+            <div class="battle-grid">
+                ${shots.map((v,i) => `
+                    <button class="battle-cell ${v === 1 ? "hit" : v === 2 ? "miss" : ""}"
+                    data-shot="${i}" ${v || finished ? "disabled" : ""}>
+                    ${v === 1 ? "✹" : v === 2 ? "·" : ""}
+                    </button>
+                `).join("")}
+            </div>
+            <div style="text-align:center;margin-top:18px">
+                <button class="secondary" id="battleReset">Новая партия</button>
+            </div>
+        `;
+
+        gameArea.querySelectorAll("[data-shot]").forEach(button => {
+            button.onclick = () => shoot(Number(button.dataset.shot));
+        });
+
+        document.getElementById("battleReset").onclick = startBattle;
+    }
+
+    function shoot(index) {
+        if (finished || shots[index]) return;
+
+        if (enemy[index] === 1) {
+            shots[index] = 1;
+            hits++;
+
+            if (hits === 3) {
+                finished = true;
+                render("Ты нашёл весь корабль! Победа! 🎉");
+                return;
+            }
+
+            render("Попадание! Стреляй ещё.");
+        } else {
+            shots[index] = 2;
+            render("Мимо! Попробуй другую клетку.");
+        }
+    }
+
+    render();
+}
+
+// ==========================================
+// 5. СПИЧКИ
+// ==========================================
+
+function startMatches() {
+    showGame("🔥 Спички", "На столе 12 спичек. За ход можно взять 1, 2 или 3. Кто забирает последнюю — проигрывает.");
+
+    let count = 12;
+    let finished = false;
+
+    function render(message = "Твой ход!") {
+        gameArea.innerHTML = `
+            <div class="big-message">${message}</div>
+            <div class="matches" id="matchDisplay">${"🪵 ".repeat(count)}</div>
+            <p style="text-align:center">Осталось спичек: <b>${count}</b></p>
+            <div class="choice-row">
+                <button data-take="1" ${finished || count < 1 ? "disabled" : ""}>Взять 1</button>
+                <button data-take="2" ${finished || count < 2 ? "disabled" : ""}>Взять 2</button>
+                <button data-take="3" ${finished || count < 3 ? "disabled" : ""}>Взять 3</button>
+            </div>
+            <div style="text-align:center;margin-top:20px">
+                <button class="secondary" id="matchesReset">Новая партия</button>
+            </div>
+        `;
+
+        gameArea.querySelectorAll("[data-take]").forEach(button => {
+            button.onclick = () => playerTake(Number(button.dataset.take));
+        });
+
+        document.getElementById("matchesReset").onclick = startMatches;
+    }
+
+    function playerTake(n) {
+        if (finished || n > count) return;
+
+        count -= n;
+
+        if (count === 0) {
+            finished = true;
+            render("Ты взял последнюю спичку. Бот победил!");
+            return;
+        }
+
+        render("Бот выбирает...");
+        setTimeout(botTake, 600);
+    }
+
+    function botTake() {
+        if (finished) return;
+
+        let take = (count - 1) % 4;
+        if (take === 0) take = 1;
+        take = Math.min(take, 3, count);
+
+        count -= take;
+
+        if (count === 0) {
+            finished = true;
+            render("Бот взял последнюю спичку. Ты победил! 🎉");
+            return;
+        }
+
+        render("Твой ход!");
+    }
+
+    render();
+}
+
+// ==========================================
+// АВТОЗАГРУЗКА КОМНАТ
+// ==========================================
+
+setInterval(() => {
+    if (!lobbyScreen.classList.contains("hidden")) {
+        loadRooms();
+    }
+}, 10000);
+
+</script>
+</body>
+</html>
