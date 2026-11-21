@@ -12,14 +12,11 @@
 :root {
     --bg: #1d120d;
     --panel: #321e14;
-    --panel2: #402517;
     --orange: #ff963f;
     --orange2: #ff852b;
     --text: #fff1e5;
     --muted: #c9a58b;
     --border: #694027;
-    --green: #76d69a;
-    --red: #ff7777;
 }
 
 * { box-sizing: border-box; }
@@ -123,11 +120,6 @@ button:disabled {
 
 .secondary:hover { background: #704329; }
 
-.danger {
-    background: #73302a;
-    color: white;
-}
-
 .hidden { display: none !important; }
 
 .profile-row {
@@ -191,11 +183,6 @@ button:disabled {
     gap: 12px;
 }
 
-.game-board {
-    margin: 22px auto;
-    max-width: 520px;
-}
-
 .big-message {
     text-align: center;
     color: var(--orange);
@@ -247,28 +234,6 @@ button:disabled {
     overflow-wrap: anywhere;
 }
 
-.dot-board {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    max-width: 420px;
-    margin: auto;
-}
-
-.dot-cell {
-    aspect-ratio: 1;
-    background: #3e281b;
-    border: 1px solid #80502f;
-    color: var(--orange);
-    font-size: 12px;
-    padding: 3px;
-}
-
-.dot-cell.used {
-    background: #a85d2b;
-    color: white;
-}
-
 .battle-grid {
     display: grid;
     grid-template-columns: repeat(6, 42px);
@@ -289,6 +254,153 @@ button:disabled {
 .battle-cell.hit { background: #a34335; }
 .battle-cell.miss { background: #53636e; }
 
+/* Красивое поле «Палки и квадраты» */
+
+.dots-game {
+    max-width: 540px;
+    margin: 22px auto;
+    padding: 18px;
+    background: linear-gradient(145deg, #382215, #24150e);
+    border: 1px solid #79502f;
+    border-radius: 20px;
+    box-shadow: 0 12px 35px #0005;
+}
+
+.dots-score {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.dots-player {
+    padding: 13px;
+    background: #21140e;
+    border: 1px solid #684027;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.dots-player.active {
+    border-color: #ff963f;
+    box-shadow: 0 0 14px #ff963f35;
+}
+
+.dots-number {
+    font-size: 27px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.dots-board {
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    width: 100%;
+    max-width: 440px;
+    margin: auto;
+    aspect-ratio: 1;
+    user-select: none;
+}
+
+.dots-cell {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.dots-point::after {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffe0bd;
+    box-shadow: 0 0 9px #ff963f75;
+    z-index: 2;
+}
+
+.dots-edge {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    transform: none;
+}
+
+.dots-edge:hover {
+    background: #ff963f18;
+    transform: none;
+}
+
+.dots-edge::after {
+    content: "";
+    position: absolute;
+    background: #79543b;
+    border-radius: 8px;
+    transition: .15s;
+}
+
+.dots-edge.horizontal::after {
+    height: 6px;
+    width: 90%;
+    left: 5%;
+    top: calc(50% - 3px);
+}
+
+.dots-edge.vertical::after {
+    width: 6px;
+    height: 90%;
+    top: 5%;
+    left: calc(50% - 3px);
+}
+
+.dots-edge:hover::after {
+    background: #ffb16e;
+    box-shadow: 0 0 10px #ff963f;
+}
+
+.dots-edge.used::after {
+    background: var(--line-color, #ff963f);
+    box-shadow: 0 0 7px var(--line-color, #ff963f);
+}
+
+.dots-box {
+    border-radius: 7px;
+    transition: .2s;
+    font-size: clamp(10px, 3vw, 20px);
+    font-weight: bold;
+}
+
+.dots-box.you {
+    background: #ff963f35;
+    color: #ffb16e;
+}
+
+.dots-box.bot {
+    background: #55b9ff35;
+    color: #80ccff;
+}
+
+.dots-turn {
+    text-align: center;
+    margin: 18px 0;
+    padding: 12px;
+    background: #21140e;
+    border-radius: 12px;
+    color: #ffbd83;
+    font-weight: bold;
+}
+
+.dots-new {
+    display: block;
+    margin: 15px auto 0;
+}
+
 footer {
     text-align: center;
     color: #98745c;
@@ -302,6 +414,8 @@ footer {
     .cell { width: 48px; height: 48px; }
     .battle-grid { grid-template-columns: repeat(6, 38px); }
     .battle-cell { width: 38px; height: 38px; }
+    .dots-game { padding: 10px; }
+    .dots-point::after { width: 9px; height: 9px; }
 }
 </style>
 </head>
@@ -400,7 +514,7 @@ footer {
         <div class="panel">
             <div class="game-top">
                 <button class="secondary" id="backLobby">← В лобби</button>
-                <span class="status online">Игра</span>
+                <span class="status online">Игра с ботом</span>
             </div>
             <h1 id="gameTitle">Игра</h1>
             <p id="gameDescription" class="muted"></p>
@@ -413,7 +527,7 @@ footer {
 
 <script>
 // ==========================================
-// SUPABASE — ВСТАВЬ СВОЙ PUBLISHABLE KEY
+// SUPABASE
 // ==========================================
 
 const SUPABASE_URL = "https://wrziasmcufzmwjlnlnbs.supabase.co";
@@ -421,12 +535,18 @@ const SUPABASE_KEY = "sb_publishable_vflNoh6aWpx0o90JzlDBLg_gxijRwS5";
 
 let db = null;
 
-if (window.supabase && SUPABASE_KEY.startsWith("sb_publishable_")) {
-    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+if (
+    window.supabase &&
+    SUPABASE_KEY.startsWith("sb_publishable_")
+) {
+    db = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
 }
 
 // ==========================================
-// ПРОФИЛЬ
+// НАЗВАНИЯ ИГР
 // ==========================================
 
 const gameNames = {
@@ -437,7 +557,11 @@ const gameNames = {
     matches: "Спички"
 };
 
-let playerColor = "#ff963f";
+// ==========================================
+// ПРОФИЛЬ
+// ==========================================
+
+let playerColor = localStorage.getItem("kplay_color") || "#ff963f";
 let nickname = localStorage.getItem("kplay_nickname") || "";
 let gender = localStorage.getItem("kplay_gender") || "Он";
 
@@ -448,28 +572,28 @@ nicknameInput.value = nickname;
 genderInput.value = gender;
 
 document.querySelectorAll(".color-choice").forEach(button => {
+    button.classList.toggle(
+        "selected",
+        button.dataset.color === playerColor
+    );
+
     button.addEventListener("click", () => {
-        document.querySelectorAll(".color-choice").forEach(x => x.classList.remove("selected"));
+        document.querySelectorAll(".color-choice")
+            .forEach(x => x.classList.remove("selected"));
+
         button.classList.add("selected");
         playerColor = button.dataset.color;
         localStorage.setItem("kplay_color", playerColor);
     });
 });
 
-const savedColor = localStorage.getItem("kplay_color");
-if (savedColor) {
-    playerColor = savedColor;
-    document.querySelectorAll(".color-choice").forEach(button => {
-        button.classList.toggle("selected", button.dataset.color === savedColor);
-    });
-}
-
 function saveProfile() {
     nickname = nicknameInput.value.trim();
     gender = genderInput.value;
 
     if (!nickname) {
-        document.getElementById("profileMessage").textContent = " Введи ник!";
+        document.getElementById("profileMessage").textContent =
+            " Введи ник!";
         return false;
     }
 
@@ -477,18 +601,17 @@ function saveProfile() {
     localStorage.setItem("kplay_gender", gender);
     localStorage.setItem("kplay_color", playerColor);
 
-    document.getElementById("profileMessage").textContent = " ✓ Сохранено!";
+    document.getElementById("profileMessage").textContent =
+        " ✓ Сохранено!";
+
     return true;
 }
 
 document.getElementById("saveProfile").onclick = saveProfile;
 
 // ==========================================
-// SUPABASE И КОМНАТЫ
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 // ==========================================
-
-let currentRoom = null;
-let roomSubscription = null;
 
 function escapeHTML(value) {
     return String(value).replace(/[&<>"']/g, char => ({
@@ -505,15 +628,23 @@ function showDatabaseError(error) {
     return error?.message || "Не удалось выполнить запрос.";
 }
 
+// ==========================================
+// КОМНАТЫ SUPABASE
+// ==========================================
+
+let currentRoom = null;
+
 async function loadRooms() {
     const list = document.getElementById("roomsList");
 
     if (!db) {
-        list.innerHTML = '<p class="muted">Сначала вставь Publishable key Supabase в код страницы.</p>';
+        list.innerHTML =
+            '<p class="muted">Вставь Publishable key Supabase в код страницы.</p>';
         return;
     }
 
-    list.innerHTML = '<p class="muted">Загружаем комнаты...</p>';
+    list.innerHTML =
+        '<p class="muted">Загружаем комнаты...</p>';
 
     const { data, error } = await db
         .from("game_rooms")
@@ -522,28 +653,41 @@ async function loadRooms() {
         .order("created_at", { ascending: false });
 
     if (error) {
-        list.innerHTML = '<p class="muted">Ошибка загрузки: ' + escapeHTML(showDatabaseError(error)) + '</p>';
+        list.innerHTML =
+            '<p class="muted">Ошибка загрузки: ' +
+            escapeHTML(showDatabaseError(error)) +
+            '</p>';
         return;
     }
 
     if (!data || data.length === 0) {
-        list.innerHTML = '<p class="muted">Пока никто не создал комнату. Будь первым!</p>';
+        list.innerHTML =
+            '<p class="muted">Пока никто не создал комнату. Будь первым!</p>';
         return;
     }
 
     list.innerHTML = "";
 
     data.forEach(room => {
-        const players = Array.isArray(room.players) ? room.players : [];
+        const players = Array.isArray(room.players)
+            ? room.players
+            : [];
 
         const item = document.createElement("div");
         item.className = "room";
 
         const info = document.createElement("div");
+
         info.innerHTML =
-            '<div class="room-name">' + escapeHTML(room.nickname) + '</div>' +
-            '<small>' + escapeHTML(gameNames[room.game] || room.game) + '</small><br>' +
-            '<small>Игроков: ' + players.length + '/2</small>';
+            '<div class="room-name">' +
+            escapeHTML(room.nickname) +
+            '</div>' +
+            '<small>' +
+            escapeHTML(gameNames[room.game] || room.game) +
+            '</small><br>' +
+            '<small>Игроков: ' +
+            players.length +
+            '/2</small>';
 
         const join = document.createElement("button");
         join.textContent = "Играть";
@@ -571,7 +715,7 @@ document.getElementById("createRoom").onclick = async () => {
 
     const game = document.getElementById("newGame").value;
 
-    const { data, error } = await db
+    const { error } = await db
         .from("game_rooms")
         .insert({
             nickname,
@@ -583,12 +727,11 @@ document.getElementById("createRoom").onclick = async () => {
                 color: playerColor
             }],
             game_state: {}
-        })
-        .select()
-        .single();
+        });
 
     if (error) {
-        message.textContent = " Ошибка: " + showDatabaseError(error);
+        message.textContent =
+            " Ошибка: " + showDatabaseError(error);
         return;
     }
 
@@ -599,7 +742,9 @@ document.getElementById("createRoom").onclick = async () => {
 async function joinRoom(room) {
     if (!saveProfile()) return;
 
-    const players = Array.isArray(room.players) ? [...room.players] : [];
+    const players = Array.isArray(room.players)
+        ? [...room.players]
+        : [];
 
     if (players.some(p => p.nickname === nickname)) {
         alert("Ты уже находишься в этой комнате.");
@@ -639,12 +784,17 @@ async function joinRoom(room) {
         return;
     }
 
-    alert("Ты присоединился к комнате! Игровые ходы между игроками пока не подключены. Можешь запустить эту игру против бота.");
     currentRoom = data;
+
+    alert(
+        "Ты присоединился к комнате! " +
+        "Синхронизация игровых ходов между игроками пока не реализована."
+    );
+
     loadRooms();
 }
 
-// Подписка на изменения списка комнат
+// Обновление списка комнат
 if (db) {
     db.channel("kotoplay-room-list")
         .on("postgres_changes", {
@@ -658,28 +808,23 @@ if (db) {
 }
 
 // ==========================================
-// ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ
+// ЭКРАНЫ
 // ==========================================
 
 const lobbyScreen = document.getElementById("lobbyScreen");
 const gameScreen = document.getElementById("gameScreen");
 const gameArea = document.getElementById("gameArea");
 
-let activeGame = "";
-
 function showGame(title, description) {
     lobbyScreen.classList.add("hidden");
     gameScreen.classList.remove("hidden");
+
     document.getElementById("gameTitle").textContent = title;
-    document.getElementById("gameDescription").textContent = description;
+    document.getElementById("gameDescription").textContent =
+        description;
 }
 
 function backToLobby() {
-    if (roomSubscription && db) {
-        db.removeChannel(roomSubscription);
-        roomSubscription = null;
-    }
-
     gameScreen.classList.add("hidden");
     lobbyScreen.classList.remove("hidden");
     loadRooms();
@@ -689,12 +834,11 @@ document.getElementById("backLobby").onclick = backToLobby;
 
 document.getElementById("startBot").onclick = () => {
     if (!saveProfile()) return;
+
     startGame(document.getElementById("botGame").value);
 };
 
 function startGame(game) {
-    activeGame = game;
-
     if (game === "rps") startRPS();
     if (game === "dots") startDots();
     if (game === "tic") startTic();
@@ -707,20 +851,31 @@ function startGame(game) {
 // ==========================================
 
 function startRPS() {
-    showGame("✊ Камень, ножницы, бумага", "Выбери один из трёх вариантов!");
+    showGame(
+        "✊ Камень, ножницы, бумага",
+        "Выбери один из трёх вариантов!"
+    );
 
     gameArea.innerHTML = `
         <div class="big-message" id="rpsMessage">Твой ход!</div>
+
         <div class="choice-row">
             <button class="choice" data-rps="0">✊</button>
             <button class="choice" data-rps="1">✌️</button>
             <button class="choice" data-rps="2">✋</button>
         </div>
+
         <div class="big-message" id="rpsResult"></div>
-        <p class="muted" style="text-align:center" id="rpsScore">Ты: 0 · Бот: 0 · Ничьи: 0</p>
+
+        <p class="muted" style="text-align:center" id="rpsScore">
+            Ты: 0 · Бот: 0 · Ничьи: 0
+        </p>
     `;
 
-    let userScore = 0, botScore = 0, draws = 0;
+    let userScore = 0;
+    let botScore = 0;
+    let draws = 0;
+
     const names = ["Камень", "Ножницы", "Бумага"];
     const icons = ["✊", "✌️", "✋"];
 
@@ -759,16 +914,25 @@ function startRPS() {
 // ==========================================
 
 function startDots() {
-    showGame("📐 Палки и квадраты", "Соединяй соседние точки. Замкнул квадрат — получи очко и дополнительный ход.");
+    showGame(
+        "📐 Палки и квадраты",
+        "Соединяй точки, захватывай квадраты и набирай очки!"
+    );
 
     const size = 4;
-    let edges = new Set();
+    const totalEdges = 2 * size * (size + 1);
+
+    let edges = new Map();
+    let owners = Array(size * size).fill(-1);
     let scores = [0, 0];
     let turn = 0;
     let locked = false;
+    let finished = false;
+
+    const playerColors = ["#ff963f", "#55b9ff"];
 
     function edgeId(type, r, c) {
-        return type + "-" + r + "-" + c;
+        return `${type}-${r}-${c}`;
     }
 
     function boxEdges(r, c) {
@@ -780,40 +944,162 @@ function startDots() {
         ];
     }
 
-    function completedBoxes() {
-        let count = 0;
+    function getCompletedBoxes() {
+        let completed = [];
+
         for (let r = 0; r < size; r++) {
             for (let c = 0; c < size; c++) {
-                if (boxEdges(r, c).every(id => edges.has(id))) count++;
+                const index = r * size + c;
+
+                if (
+                    owners[index] === -1 &&
+                    boxEdges(r, c).every(id => edges.has(id))
+                ) {
+                    completed.push(index);
+                }
             }
         }
-        return count;
+
+        return completed;
     }
 
-    function render() {
-        let html = `
-            <div class="big-message">Ты: ${scores[0]} · Бот: ${scores[1]}</div>
-            <p style="text-align:center">Ход: ${turn === 0 ? "Ты" : "Бот"}</p>
-            <div class="dot-board">
-        `;
+    function getAvailableEdges() {
+        let result = [];
 
-        for (let r = 0; r < size; r++) {
+        for (let r = 0; r <= size; r++) {
             for (let c = 0; c < size; c++) {
                 const id = edgeId("h", r, c);
-                html += `<button class="dot-cell ${edges.has(id) ? "used" : ""}" data-edge="${id}">${edges.has(id) ? "━" : "·"}</button>`;
+                if (!edges.has(id)) result.push(id);
             }
         }
 
-        html += `</div>
-        <div style="text-align:center;margin-top:15px">
-            <button class="secondary" id="dotsReset">Новая партия</button>
-        </div>`;
+        for (let r = 0; r < size; r++) {
+            for (let c = 0; c <= size; c++) {
+                const id = edgeId("v", r, c);
+                if (!edges.has(id)) result.push(id);
+            }
+        }
+
+        return result;
+    }
+
+    function render(message) {
+        let html = `
+            <div class="dots-game">
+
+                <div class="dots-score">
+                    <div class="dots-player ${turn === 0 ? "active" : ""}">
+                        <div>🟠 Ты</div>
+                        <div class="dots-number">${scores[0]}</div>
+                    </div>
+
+                    <div class="dots-player ${turn === 1 ? "active" : ""}">
+                        <div>🔵 Бот</div>
+                        <div class="dots-number">${scores[1]}</div>
+                    </div>
+                </div>
+
+                <div class="dots-turn">${message}</div>
+
+                <div class="dots-board">
+        `;
+
+        for (let r = 0; r < size * 2 + 1; r++) {
+            for (let c = 0; c < size * 2 + 1; c++) {
+
+                // Точки
+                if (r % 2 === 0 && c % 2 === 0) {
+                    html += `
+                        <div class="dots-cell dots-point"></div>
+                    `;
+                }
+
+                // Горизонтальные линии
+                else if (r % 2 === 0 && c % 2 === 1) {
+                    const id = edgeId(
+                        "h",
+                        r / 2,
+                        (c - 1) / 2
+                    );
+
+                    const used = edges.has(id);
+                    const owner = edges.get(id);
+
+                    html += `
+                        <div class="dots-cell">
+                            <button
+                                class="dots-edge horizontal ${used ? "used" : ""}"
+                                style="--line-color:${playerColors[owner] || "#ff963f"}"
+                                data-edge="${id}"
+                                ${used || locked || finished || turn !== 0 ? "disabled" : ""}
+                                aria-label="Горизонтальная линия">
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Вертикальные линии
+                else if (r % 2 === 1 && c % 2 === 0) {
+                    const id = edgeId(
+                        "v",
+                        (r - 1) / 2,
+                        c / 2
+                    );
+
+                    const used = edges.has(id);
+                    const owner = edges.get(id);
+
+                    html += `
+                        <div class="dots-cell">
+                            <button
+                                class="dots-edge vertical ${used ? "used" : ""}"
+                                style="--line-color:${playerColors[owner] || "#ff963f"}"
+                                data-edge="${id}"
+                                ${used || locked || finished || turn !== 0 ? "disabled" : ""}
+                                aria-label="Вертикальная линия">
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Квадраты
+                else {
+                    const boxIndex =
+                        ((r - 1) / 2) * size + (c - 1) / 2;
+
+                    const owner = owners[boxIndex];
+
+                    html += `
+                        <div class="dots-cell dots-box ${
+                            owner === 0 ? "you" :
+                            owner === 1 ? "bot" : ""
+                        }">
+                            ${
+                                owner === 0 ? "★" :
+                                owner === 1 ? "●" : ""
+                            }
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        html += `
+                </div>
+
+                <button class="secondary dots-new" id="dotsReset">
+                    ↻ Новая партия
+                </button>
+
+            </div>
+        `;
 
         gameArea.innerHTML = html;
 
         gameArea.querySelectorAll("[data-edge]").forEach(button => {
             button.onclick = () => {
-                if (turn !== 0 || locked || edges.has(button.dataset.edge)) return;
+                if (turn !== 0 || locked || finished) return;
+
                 makeMove(button.dataset.edge, 0);
             };
         });
@@ -821,88 +1107,112 @@ function startDots() {
         document.getElementById("dotsReset").onclick = startDots;
     }
 
-    function allEdges() {
-        let arr = [];
-        for (let r = 0; r <= size; r++)
-            for (let c = 0; c < size; c++)
-                arr.push(edgeId("h", r, c));
-
-        for (let r = 0; r < size; r++)
-            for (let c = 0; c <= size; c++)
-                arr.push(edgeId("v", r, c));
-
-        return arr.filter(id => !edges.has(id));
-    }
-
-    function boxesBefore() {
-        return completedBoxes();
-    }
-
     function makeMove(id, player) {
-        const before = boxesBefore();
-        edges.add(id);
-        const after = boxesBefore();
-        const got = after - before;
+        if (finished || edges.has(id)) return;
 
-        if (got > 0) scores[player] += got;
-        else turn = 1 - turn;
+        edges.set(id, player);
 
-        render();
+        const completed = getCompletedBoxes();
 
-        if (edges.size === (size + 1) * size * 2) {
-            document.querySelector(".big-message").textContent =
-                scores[0] > scores[1] ? "Ты победил!" :
-                scores[0] < scores[1] ? "Победил бот!" : "Ничья!";
+        completed.forEach(index => {
+            owners[index] = player;
+            scores[player]++;
+        });
+
+        // Если квадрат не замкнут, ход переходит другому игроку.
+        if (completed.length === 0) {
+            turn = 1 - turn;
+        }
+
+        if (edges.size === totalEdges) {
+            finished = true;
+
+            let result = "Ничья!";
+
+            if (scores[0] > scores[1]) {
+                result = "🏆 Ты победил!";
+            }
+
+            if (scores[1] > scores[0]) {
+                result = "🤖 Победил бот!";
+            }
+
+            render(result);
             return;
         }
 
         if (turn === 1) {
             locked = true;
-            setTimeout(botMove, 600);
+            render("🤖 Бот думает...");
+
+            setTimeout(botMove, 650);
         } else {
             locked = false;
+
+            render(
+                completed.length > 0
+                    ? `✨ Ты захватил ${completed.length} квадрат(а)! Твой ход.`
+                    : "🟠 Твой ход!"
+            );
         }
     }
 
     function botMove() {
-        const options = allEdges();
+        if (finished) return;
+
+        const options = getAvailableEdges();
+
         if (!options.length) return;
 
         let selected = null;
 
-        // Бот старается закрыть квадрат, если это возможно.
+        // Бот сначала ищет линию, закрывающую квадрат.
         for (const id of options) {
-            const before = completedBoxes();
-            edges.add(id);
-            const after = completedBoxes();
+            edges.set(id, 1);
+
+            const completed = getCompletedBoxes();
+
             edges.delete(id);
 
-            if (after > before) {
+            if (completed.length > 0) {
                 selected = id;
                 break;
             }
         }
 
-        if (!selected) selected = options[Math.floor(Math.random() * options.length)];
+        // Если такой линии нет, выбирает случайную.
+        if (!selected) {
+            selected = options[
+                Math.floor(Math.random() * options.length)
+            ];
+        }
 
         makeMove(selected, 1);
     }
 
-    render();
+    render("🟠 Твой ход! Выбери линию между точками.");
 }
 
 // ==========================================
-// 3. КРЕСТИКИ-НОЛИКИ 5×5, ЧЕТЫРЕ В РЯД
+// 3. КРЕСТИКИ-НОЛИКИ 5×5
 // ==========================================
 
 function startTic() {
-    showGame("❌ Крестики-нолики 5×5", "Собери четыре своих символа подряд по горизонтали, вертикали или диагонали.");
+    showGame(
+        "❌ Крестики-нолики 5×5",
+        "Собери четыре своих символа подряд по горизонтали, вертикали или диагонали."
+    );
 
     let board = Array(25).fill("");
     let finished = false;
 
     function winner(b, symbol) {
-        const directions = [[0,1], [1,0], [1,1], [1,-1]];
+        const directions = [
+            [0, 1],
+            [1, 0],
+            [1, 1],
+            [1, -1]
+        ];
 
         for (let r = 0; r < 5; r++) {
             for (let c = 0; c < 5; c++) {
@@ -915,8 +1225,13 @@ function startTic() {
                         const nr = r + dr * k;
                         const nc = c + dc * k;
 
-                        if (nr < 0 || nr >= 5 || nc < 0 || nc >= 5) break;
+                        if (
+                            nr < 0 || nr >= 5 ||
+                            nc < 0 || nc >= 5
+                        ) break;
+
                         if (b[nr * 5 + nc] !== symbol) break;
+
                         count++;
                     }
 
@@ -931,19 +1246,49 @@ function startTic() {
     function render(message = "Твой ход — X") {
         gameArea.innerHTML = `
             <div class="big-message" id="ticMessage">${message}</div>
-            <div class="grid" style="grid-template-columns:repeat(5,58px)" id="ticBoard">
-                ${board.map((v,i) => `<button class="cell" data-cell="${i}" ${v || finished ? "disabled" : ""}>${v}</button>`).join("")}
+
+            <div class="grid"
+                 style="grid-template-columns:repeat(5,58px)"
+                 id="ticBoard">
+
+                ${board.map((v, i) => `
+                    <button
+                        class="cell"
+                        data-cell="${i}"
+                        ${v || finished ? "disabled" : ""}>
+                        ${v}
+                    </button>
+                `).join("")}
+
             </div>
+
             <div style="text-align:center;margin-top:18px">
-                <button class="secondary" id="ticReset">Новая партия</button>
+                <button class="secondary" id="ticReset">
+                    Новая партия
+                </button>
             </div>
         `;
 
         gameArea.querySelectorAll("[data-cell]").forEach(button => {
-            button.onclick = () => playerMove(Number(button.dataset.cell));
+            button.onclick = () =>
+                playerMove(Number(button.dataset.cell));
         });
 
         document.getElementById("ticReset").onclick = startTic;
+    }
+
+    function findWinningMove(symbol) {
+        for (let i = 0; i < 25; i++) {
+            if (board[i]) continue;
+
+            board[i] = symbol;
+            const won = winner(board, symbol);
+            board[i] = "";
+
+            if (won) return i;
+        }
+
+        return null;
     }
 
     function playerMove(index) {
@@ -970,14 +1315,21 @@ function startTic() {
     function botMove() {
         if (finished) return;
 
-        let move = findWinningMove("O") ?? findWinningMove("X");
+        let move = findWinningMove("O");
 
         if (move === null) {
-            const empty = board.map((v,i) => v ? -1 : i).filter(i => i >= 0);
+            move = findWinningMove("X");
+        }
+
+        if (move === null) {
+            const empty = board
+                .map((v, i) => v ? -1 : i)
+                .filter(i => i >= 0);
+
             move = empty[Math.floor(Math.random() * empty.length)];
         }
 
-        if (move === undefined) return;
+        if (move === undefined || move === null) return;
 
         board[move] = "O";
 
@@ -992,17 +1344,6 @@ function startTic() {
         }
     }
 
-    function findWinningMove(symbol) {
-        for (let i = 0; i < 25; i++) {
-            if (board[i]) continue;
-            board[i] = symbol;
-            const won = winner(board, symbol);
-            board[i] = "";
-            if (won) return i;
-        }
-        return null;
-    }
-
     render();
 }
 
@@ -1011,22 +1352,34 @@ function startTic() {
 // ==========================================
 
 function startBattle() {
-    showGame("🚢 Морской бой", "Найди корабль бота! Поле 6×6. Корабли размещаются случайно.");
+    showGame(
+        "🚢 Морской бой",
+        "Найди корабль бота! Поле 6×6. Корабли размещаются случайно."
+    );
 
     const N = 6;
+
     let enemy = Array(N * N).fill(0);
     let shots = Array(N * N).fill(0);
     let hits = 0;
     let finished = false;
 
-    // Один корабль длиной 3 клетки.
     function placeShip() {
-        let horizontal = Math.random() < 0.5;
-        let r = Math.floor(Math.random() * (horizontal ? N : N - 2));
-        let c = Math.floor(Math.random() * (horizontal ? N - 2 : N));
+        const horizontal = Math.random() < 0.5;
+
+        const r = Math.floor(
+            Math.random() * (horizontal ? N : N - 2)
+        );
+
+        const c = Math.floor(
+            Math.random() * (horizontal ? N - 2 : N)
+        );
 
         for (let k = 0; k < 3; k++) {
-            enemy[(r + (horizontal ? 0 : k)) * N + c + (horizontal ? k : 0)] = 1;
+            const row = r + (horizontal ? 0 : k);
+            const col = c + (horizontal ? k : 0);
+
+            enemy[row * N + col] = 1;
         }
     }
 
@@ -1035,22 +1388,38 @@ function startBattle() {
     function render(message = "Выбирай клетку!") {
         gameArea.innerHTML = `
             <div class="big-message">${message}</div>
-            <p style="text-align:center">Попаданий: ${hits}/3</p>
+
+            <p style="text-align:center">
+                Попаданий: ${hits}/3
+            </p>
+
             <div class="battle-grid">
-                ${shots.map((v,i) => `
-                    <button class="battle-cell ${v === 1 ? "hit" : v === 2 ? "miss" : ""}"
-                    data-shot="${i}" ${v || finished ? "disabled" : ""}>
-                    ${v === 1 ? "✹" : v === 2 ? "·" : ""}
+                ${shots.map((v, i) => `
+                    <button
+                        class="battle-cell ${
+                            v === 1 ? "hit" :
+                            v === 2 ? "miss" : ""
+                        }"
+                        data-shot="${i}"
+                        ${v || finished ? "disabled" : ""}>
+                        ${
+                            v === 1 ? "✹" :
+                            v === 2 ? "·" : ""
+                        }
                     </button>
                 `).join("")}
             </div>
+
             <div style="text-align:center;margin-top:18px">
-                <button class="secondary" id="battleReset">Новая партия</button>
+                <button class="secondary" id="battleReset">
+                    Новая партия
+                </button>
             </div>
         `;
 
         gameArea.querySelectorAll("[data-shot]").forEach(button => {
-            button.onclick = () => shoot(Number(button.dataset.shot));
+            button.onclick = () =>
+                shoot(Number(button.dataset.shot));
         });
 
         document.getElementById("battleReset").onclick = startBattle;
@@ -1084,7 +1453,10 @@ function startBattle() {
 // ==========================================
 
 function startMatches() {
-    showGame("🔥 Спички", "На столе 12 спичек. За ход можно взять 1, 2 или 3. Кто забирает последнюю — проигрывает.");
+    showGame(
+        "🔥 Спички",
+        "На столе 12 спичек. За ход можно взять 1, 2 или 3. Кто забирает последнюю — проигрывает."
+    );
 
     let count = 12;
     let finished = false;
@@ -1092,23 +1464,43 @@ function startMatches() {
     function render(message = "Твой ход!") {
         gameArea.innerHTML = `
             <div class="big-message">${message}</div>
-            <div class="matches" id="matchDisplay">${"🪵 ".repeat(count)}</div>
-            <p style="text-align:center">Осталось спичек: <b>${count}</b></p>
-            <div class="choice-row">
-                <button data-take="1" ${finished || count < 1 ? "disabled" : ""}>Взять 1</button>
-                <button data-take="2" ${finished || count < 2 ? "disabled" : ""}>Взять 2</button>
-                <button data-take="3" ${finished || count < 3 ? "disabled" : ""}>Взять 3</button>
+
+            <div class="matches">
+                ${"🪵 ".repeat(count)}
             </div>
+
+            <p style="text-align:center">
+                Осталось спичек: <b>${count}</b>
+            </p>
+
+            <div class="choice-row">
+                <button data-take="1" ${finished || count < 1 ? "disabled" : ""}>
+                    Взять 1
+                </button>
+
+                <button data-take="2" ${finished || count < 2 ? "disabled" : ""}>
+                    Взять 2
+                </button>
+
+                <button data-take="3" ${finished || count < 3 ? "disabled" : ""}>
+                    Взять 3
+                </button>
+            </div>
+
             <div style="text-align:center;margin-top:20px">
-                <button class="secondary" id="matchesReset">Новая партия</button>
+                <button class="secondary" id="matchesReset">
+                    Новая партия
+                </button>
             </div>
         `;
 
         gameArea.querySelectorAll("[data-take]").forEach(button => {
-            button.onclick = () => playerTake(Number(button.dataset.take));
+            button.onclick = () =>
+                playerTake(Number(button.dataset.take));
         });
 
-        document.getElementById("matchesReset").onclick = startMatches;
+        document.getElementById("matchesReset").onclick =
+            startMatches;
     }
 
     function playerTake(n) {
@@ -1130,7 +1522,9 @@ function startMatches() {
         if (finished) return;
 
         let take = (count - 1) % 4;
+
         if (take === 0) take = 1;
+
         take = Math.min(take, 3, count);
 
         count -= take;
@@ -1148,7 +1542,7 @@ function startMatches() {
 }
 
 // ==========================================
-// АВТОЗАГРУЗКА КОМНАТ
+// АВТООБНОВЛЕНИЕ КОМНАТ
 // ==========================================
 
 setInterval(() => {
