@@ -9,14 +9,15 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#1d120d;color:#fff1e5;font-family:Arial,sans-serif}
-header{background:#321b10;padding:18px 6%;display:flex;justify-content:space-between;align-items:center}
+header{background:#321b10;padding:18px 6%;display:flex;justify-content:space-between}
 .logo{font-size:27px;font-weight:bold;color:#ff963f}
 main{max-width:950px;margin:30px auto;padding:0 15px}
 .panel{background:#321e14;border:1px solid #65402a;border-radius:15px;padding:20px;margin-bottom:20px}
 h2{color:#ff963f}
-button,select,input{font-size:15px;border-radius:8px;padding:11px}
+button,input,select{font-size:15px;border-radius:8px;padding:11px}
 button{background:#ff852b;color:#281307;border:0;font-weight:bold;cursor:pointer;margin:4px}
 button:hover{background:#ffad64}
+button:disabled{opacity:.5;cursor:default}
 input,select{background:#21130d;border:1px solid #80502e;color:white;width:100%;margin:6px 0 12px}
 .small{color:#c5a38c;font-size:14px}
 .hidden{display:none!important}
@@ -24,12 +25,9 @@ input,select{background:#21130d;border:1px solid #80502e;color:white;width:100%;
 .colors{display:flex;gap:10px;margin:10px 0}
 .color{width:32px;height:32px;border-radius:50%;border:3px solid transparent;cursor:pointer}
 .color.selected{border-color:white}
-#gameArea{text-align:center}
+.status{color:#ffb36e;min-height:25px;margin:12px}
 .board{display:grid;gap:5px;justify-content:center;margin:18px auto}
 .cell{width:48px;height:48px;background:#58321e;color:white;border-radius:6px;font-size:22px;padding:0}
-.cell:disabled{opacity:1;cursor:default}
-.status{color:#ffb36e;min-height:25px;margin:12px}
-#dotsBoard{display:grid;grid-template-columns:repeat(5,42px);gap:5px;justify-content:center}
 .dotcell{width:42px;height:42px;background:#58321e;color:#ffb36e;padding:0;font-size:12px}
 footer{text-align:center;color:#98745d;padding:25px}
 </style>
@@ -40,9 +38,8 @@ footer{text-align:center;color:#98745d;padding:25px}
 <main>
 <section class="panel" id="profile">
 <h2>👋 Добро пожаловать!</h2>
-<label>Твоё игровое имя</label>
-<input id="nickname" maxlength="20" placeholder="Например, Котик123">
-<p>Выбери цвет:</p>
+<p>Выбери имя и цвет.</p>
+<input id="nickname" maxlength="20" placeholder="Твоё имя">
 <div class="colors" id="colors">
 <div class="color selected" data-c="#ff963f" style="background:#ff963f"></div>
 <div class="color" data-c="#55b9ff" style="background:#55b9ff"></div>
@@ -63,7 +60,6 @@ footer{text-align:center;color:#98745d;padding:25px}
 
 <section class="panel">
 <h2>➕ Создать комнату</h2>
-<label>Выбери игру</label>
 <select id="roomGame">
 <option>Камень, ножницы, бумага</option>
 <option>Палки и квадраты</option>
@@ -77,7 +73,6 @@ footer{text-align:center;color:#98745d;padding:25px}
 
 <section class="panel">
 <h2>🤖 Играть с ботом</h2>
-<p class="small">Выбери игру и сыграй против компьютера.</p>
 <select id="botGame">
 <option value="rps">Камень, ножницы, бумага</option>
 <option value="dots">Палки и квадраты</option>
@@ -90,7 +85,7 @@ footer{text-align:center;color:#98745d;padding:25px}
 </div>
 
 <section class="panel hidden" id="gameArea">
-<button class="secondary" onclick="backToLobby()">← В меню</button>
+<button onclick="backToLobby()">← В меню</button>
 <h2 id="gameTitle"></h2>
 <div class="status" id="gameStatus"></div>
 <div id="gameContent"></div>
@@ -100,32 +95,38 @@ footer{text-align:center;color:#98745d;padding:25px}
 <footer>КотоPlay © 2026</footer>
 
 <script>
-// ВСТАВЬ СЮДА СВОИ ДАННЫЕ SUPABASE
+// НАСТРОЙКИ SUPABASE
 const SUPABASE_URL = "https://wrziasmcufzmwjlnlnbs.supabase.co/rest/v1/";
 const SUPABASE_KEY = "sb_publishable_vflNoh6aWpx0o90JzlDBLg_gxijRwS5";
 
-let db = null;
-let nickname = "";
-let playerColor = "#ff963f";
-let currentGame = "";
-let gameData = {};
-let refreshTimer = null;
+// Исправляем URL, если в нём случайно есть /rest/v1
+const cleanUrl = SUPABASE_URL.trim()
+    .replace(/\/+$/, "")
+    .replace(/\/rest\/v1$/i, "");
 
-if (SUPABASE_URL.startsWith("https://") &&
-    SUPABASE_KEY.startsWith("sb_publishable_")) {
-    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let db = null;
+
+if(cleanUrl.startsWith("https://") &&
+   SUPABASE_KEY.startsWith("sb_publishable_")){
+    db = window.supabase.createClient(cleanUrl,SUPABASE_KEY);
 }
 
-document.querySelectorAll(".color").forEach(el => {
-    el.onclick = () => {
-        document.querySelectorAll(".color").forEach(x => x.classList.remove("selected"));
+let nickname="";
+let playerColor="#ff963f";
+let currentGame="";
+let gameData={};
+let refreshTimer=null;
+
+document.querySelectorAll(".color").forEach(el=>{
+    el.onclick=()=>{
+        document.querySelectorAll(".color").forEach(x=>x.classList.remove("selected"));
         el.classList.add("selected");
-        playerColor = el.dataset.c;
+        playerColor=el.dataset.c;
     };
 });
 
 function enterLobby(){
-    nickname = document.getElementById("nickname").value.trim();
+    nickname=document.getElementById("nickname").value.trim();
     if(!nickname){
         document.getElementById("profileStatus").textContent="Введи имя!";
         return;
@@ -142,18 +143,19 @@ function enterLobby(){
 async function loadRooms(){
     const box=document.getElementById("rooms");
     if(!db){
-        box.innerHTML='<p class="small">Supabase пока не подключён. Вставь URL и Publishable key в код.</p>';
+        box.textContent="Проверь URL и Publishable key Supabase.";
         return;
     }
     const {data,error}=await db.from("game_rooms")
         .select("*").eq("status","waiting")
         .order("created_at",{ascending:false});
+
     if(error){
-        box.textContent="Ошибка загрузки комнат: "+error.message;
+        box.textContent="Ошибка: "+error.message;
         return;
     }
     if(!data.length){
-        box.innerHTML='<p class="small">Пока никто не зовёт играть. Создай первую комнату!</p>';
+        box.innerHTML='<p class="small">Пока приглашений нет. Создай первое!</p>';
         return;
     }
     box.innerHTML="";
@@ -177,32 +179,30 @@ async function loadRooms(){
 
 async function createRoom(){
     const status=document.getElementById("roomStatus");
-    if(!db){status.textContent="Сначала настрой подключение Supabase в коде.";return;}
-    const game=document.getElementById("roomGame").value;
+    if(!db){status.textContent="Supabase не подключён.";return;}
     const {data,error}=await db.from("game_rooms").insert({
-        nickname,player_color:playerColor,game,
+        nickname,
+        player_color:playerColor,
+        game:document.getElementById("roomGame").value,
         status:"waiting",
         players:[{nickname,color:playerColor}]
     }).select().single();
-    if(error){status.textContent="Не удалось создать комнату: "+error.message;return;}
-    status.textContent="Приглашение создано! Оно появится в списке комнат.";
+
+    if(error){status.textContent="Ошибка: "+error.message;return;}
+    status.textContent="Приглашение создано!";
     loadRooms();
 }
 
 async function joinRoom(room){
-    if(!db)return;
     const players=Array.isArray(room.players)?room.players:[];
-    if(players.some(p=>p.nickname===nickname)){
-        alert("Ты уже находишься в этой комнате.");
-        return;
-    }
-    if(players.length>=2){alert("Комната уже заполнена.");loadRooms();return;}
+    if(players.length>=2){alert("Комната заполнена!");return;}
     const updated=[...players,{nickname,color:playerColor}];
     const {error}=await db.from("game_rooms").update({
         players:updated,status:"playing"
     }).eq("id",room.id).eq("status","waiting");
-    if(error){alert("Не удалось присоединиться: "+error.message);return;}
-    alert("Ты присоединился к комнате! Следующим этапом подключим синхронизацию ходов.");
+
+    if(error){alert("Ошибка: "+error.message);return;}
+    alert("Ты присоединился! Синхронизацию ходов добавим следующим этапом.");
     loadRooms();
 }
 
@@ -218,10 +218,7 @@ function showGame(title,status){
     document.getElementById("gameStatus").textContent=status;
     document.getElementById("gameContent").innerHTML="";
 }
-
-function setStatus(text){
-    document.getElementById("gameStatus").textContent=text;
-}
+function setStatus(t){document.getElementById("gameStatus").textContent=t;}
 
 function startBotGame(){
     currentGame=document.getElementById("botGame").value;
@@ -234,8 +231,8 @@ function startBotGame(){
 
 // КАМЕНЬ, НОЖНИЦЫ, БУМАГА
 function startRPS(){
-    showGame("Камень, ножницы, бумага","Выбери свой вариант!");
-    const content=document.getElementById("gameContent");
+    showGame("Камень, ножницы, бумага","Выбери вариант!");
+    const c=document.getElementById("gameContent");
     ["Камень","Ножницы","Бумага"].forEach((v,i)=>{
         const b=document.createElement("button");
         b.textContent=v;
@@ -245,72 +242,86 @@ function startRPS(){
             let result="Ничья!";
             if((i-bot+3)%3===1)result="Ты победил!";
             if((bot-i+3)%3===1)result="Бот победил!";
-            setStatus("Ты: "+v+" · Бот: "+names[bot]+" — "+result);
+            setStatus("Ты: "+v+". Бот: "+names[bot]+". "+result);
         };
-        content.append(b);
+        c.append(b);
     });
 }
 
-// ПАЛКИ И КВАДРАТЫ: 5x5 точек, 4x4 квадрата
+// ПАЛКИ И КВАДРАТЫ
 function startDots(){
-    showGame("Палки и квадраты","Твой ход! Нажимай на стороны квадратов.");
-    gameData={h:Array.from({length:5},()=>Array(4).fill(false)),
-              v:Array.from({length:4},()=>Array(5).fill(false)),
-              boxes:Array.from({length:4},()=>Array(4).fill(0)),
-              turn:1,score:[0,0]};
+    showGame("Палки и квадраты","Соединяй стороны квадратов!");
+    gameData={
+        h:Array.from({length:5},()=>Array(4).fill(false)),
+        v:Array.from({length:4},()=>Array(5).fill(false)),
+        boxes:Array.from({length:4},()=>Array(4).fill(0)),
+        turn:1,score:[0,0]
+    };
     drawDots();
 }
 function drawDots(){
     const c=document.getElementById("gameContent");c.innerHTML="";
     const d=gameData;
-    const board=document.createElement("div");board.id="dotsBoard";
+    const board=document.createElement("div");
+    board.id="dotsBoard";
+    board.style.display="grid";
+    board.style.gridTemplateColumns="repeat(5,42px)";
     for(let r=0;r<5;r++)for(let col=0;col<5;col++){
         const dot=document.createElement("span");
-        dot.textContent="●";dot.style.color="#ffb36e";dot.style.fontSize="20px";
-        dot.style.display="flex";dot.style.alignItems="center";dot.style.justifyContent="center";
+        dot.textContent="●";
+        dot.style.color="#ffb36e";
+        dot.style.textAlign="center";
+        dot.style.fontSize="20px";
         board.append(dot);
     }
     c.append(board);
     const controls=document.createElement("div");
-    controls.style.marginTop="15px";
+    controls.style.display="grid";
+    controls.style.gridTemplateColumns="repeat(4,42px)";
     for(let r=0;r<5;r++)for(let col=0;col<4;col++){
-        const b=document.createElement("button");b.className="dotcell";
+        const b=document.createElement("button");
+        b.className="dotcell";
         b.textContent=d.h[r][col]?"━":"·";
         b.onclick=()=>dotMove("h",r,col);
         controls.append(b);
     }
     c.append(controls);
     const vertical=document.createElement("div");
+    vertical.style.display="grid";
+    vertical.style.gridTemplateColumns="repeat(5,42px)";
     for(let r=0;r<4;r++)for(let col=0;col<5;col++){
-        const b=document.createElement("button");b.className="dotcell";
+        const b=document.createElement("button");
+        b.className="dotcell";
         b.textContent=d.v[r][col]?"┃":"·";
         b.onclick=()=>dotMove("v",r,col);
         vertical.append(b);
     }
     c.append(vertical);
-    setStatus("Ты: "+d.score[0]+" · Бот: "+d.score[1]+(d.turn===1?" · Твой ход":" · Ход бота"));
-}
-function dotMove(type,r,col){
-    const d=gameData;
-    if(d.turn!==1|| (type==="h"?d.h[r][col]:d.v[r][col]))return;
-    if(type==="h")d.h[r][col]=true;else d.v[r][col]=true;
-    const gained=claimBoxes(1);
-    if(!gained)d.turn=2;
-    drawDots();
-    if(d.score[0]+d.score[1]===16){finishDots();return;}
-    if(d.turn===2)setTimeout(dotBot,500);
+    setStatus("Ты: "+d.score[0]+" · Бот: "+d.score[1]+
+        (d.turn===1?" · Твой ход":" · Ход бота"));
 }
 function claimBoxes(player){
     const d=gameData;let gained=0;
     for(let r=0;r<4;r++)for(let c=0;c<4;c++){
-        if(d.boxes[r][c]===0&&d.h[r][c]&&d.h[r+1][c]&&d.v[r][c]&&d.v[r][c+1]){
-            d.boxes[r][c]=player;d.score[player-1]++;gained++;
+        if(!d.boxes[r][c]&&d.h[r][c]&&d.h[r+1][c]&&d.v[r][c]&&d.v[r][c+1]){
+            d.boxes[r][c]=player;
+            d.score[player-1]++;
+            gained++;
         }
     }
     return gained;
 }
+function dotMove(t,r,c){
+    const d=gameData;
+    if(d.turn!==1||(t==="h"?d.h[r][c]:d.v[r][c]))return;
+    if(t==="h")d.h[r][c]=true;else d.v[r][c]=true;
+    if(!claimBoxes(1))d.turn=2;
+    drawDots();
+    if(d.score[0]+d.score[1]===16){finishDots();return;}
+    if(d.turn===2)setTimeout(dotBot,500);
+}
 function dotBot(){
-    const d=gameData;if(d.turn!==2)return;
+    const d=gameData;
     const moves=[];
     for(let r=0;r<5;r++)for(let c=0;c<4;c++)if(!d.h[r][c])moves.push(["h",r,c]);
     for(let r=0;r<4;r++)for(let c=0;c<5;c++)if(!d.v[r][c])moves.push(["v",r,c]);
@@ -321,7 +332,7 @@ function dotBot(){
         if(t==="h")d.h[r][c]=true;else d.v[r][c]=true;
         let closes=false;
         for(let a=0;a<4;a++)for(let b=0;b<4;b++)
-            if(d.boxes[a][b]===0&&d.h[a][b]&&d.h[a+1][b]&&d.v[a][b]&&d.v[a][b+1])closes=true;
+            if(!d.boxes[a][b]&&d.h[a][b]&&d.h[a+1][b]&&d.v[a][b]&&d.v[a][b+1])closes=true;
         if(t==="h")d.h[r][c]=false;else d.v[r][c]=false;
         if(closes){chosen=m;break;}
     }
@@ -334,14 +345,14 @@ function dotBot(){
     else if(d.turn===2)setTimeout(dotBot,500);
 }
 function finishDots(){
-    const d=gameData;
-    setStatus(d.score[0]>d.score[1]?"Ты победил!":d.score[0]<d.score[1]?"Бот победил!":"Ничья!");
+    const s=gameData.score;
+    setStatus(s[0]>s[1]?"Ты победил!":s[0]<s[1]?"Бот победил!":"Ничья!");
 }
 
-// КРЕСТИКИ-НОЛИКИ 5x5, четыре в ряд
+// КРЕСТИКИ-НОЛИКИ 5x5
 function startTTT(){
-    showGame("Крестики-нолики 5×5","Нужно собрать четыре символа подряд!");
-    gameData={board:Array(25).fill(""),turn:"X",over:false};
+    showGame("Крестики-нолики 5×5","Собери четыре символа подряд!");
+    gameData={board:Array(25).fill(""),over:false};
     drawTTT();
 }
 function winnerTTT(b,s){
@@ -358,12 +369,29 @@ function winnerTTT(b,s){
     }
     return false;
 }
+function tttBotMove(b){
+    for(const s of ["O","X"]){
+        for(let i=0;i<25;i++)if(!b[i]){
+            b[i]=s;const win=winnerTTT(b,s);b[i]="";
+            if(win)return i;
+        }
+    }
+    const moves=[];
+    for(let i=0;i<25;i++)if(!b[i]){
+        const r=Math.floor(i/5),c=i%5;
+        moves.push([5-Math.abs(2-r)-Math.abs(2-c)+Math.random(),i]);
+    }
+    moves.sort((a,b)=>b[0]-a[0]);
+    return moves[0][1];
+}
 function drawTTT(){
     const c=document.getElementById("gameContent");c.innerHTML="";
-    const grid=document.createElement("div");grid.className="board";
+    const grid=document.createElement("div");
+    grid.className="board";
     grid.style.gridTemplateColumns="repeat(5,48px)";
     gameData.board.forEach((v,i)=>{
-        const b=document.createElement("button");b.className="cell";b.textContent=v;
+        const b=document.createElement("button");
+        b.className="cell";b.textContent=v;
         b.disabled=!!v||gameData.over;
         b.onclick=()=>tttMove(i);
         grid.append(b);
@@ -380,74 +408,69 @@ function tttMove(i){
     if(d.board.every(Boolean)){d.over=true;drawTTT();setStatus("Ничья!");return;}
     drawTTT();setStatus("Твой ход!");
 }
-function tttBotMove(b){
-    for(const s of ["O","X"]){
-        for(let i=0;i<25;i++)if(!b[i]){
-            b[i]=s;let win=winnerTTT(b,s);b[i]="";
-            if(win)return i;
-        }
-    }
-    let best=[];
-    for(let i=0;i<25;i++)if(!b[i]){
-        const r=Math.floor(i/5),c=i%5;
-        let score=5-Math.abs(2-r)-Math.abs(2-c);
-        best.push([score+Math.random(),i]);
-    }
-    best.sort((a,b)=>b[0]-a[0]);
-    return best[0][1];
-}
 
-// МОРСКОЙ БОЙ 10x10, случайная расстановка кораблей
+// МОРСКОЙ БОЙ
 function startShips(){
-    showGame("Морской бой","Твои корабли уже расставлены. Найди корабли бота!");
-    gameData={player:Array(100).fill(0),enemy:Array(100).fill(0),shots:Array(100).fill(false),botShots:Array(100).fill(false),over:false};
-    placeFleet(gameData.player);placeFleet(gameData.enemy);
+    showGame("Морской бой","Корабли расставлены случайно. Найди корабли бота!");
+    gameData={
+        player:Array(100).fill(0),enemy:Array(100).fill(0),
+        shots:Array(100).fill(false),botShots:Array(100).fill(false),
+        over:false
+    };
+    placeFleet(gameData.player);
+    placeFleet(gameData.enemy);
     drawShips();
 }
 function placeFleet(board){
     const fleet=[4,3,3,2,2,2,1,1,1,1];
     for(const len of fleet){
-        let placed=false,tries=0;
-        while(!placed&&tries++<1000){
-            const horizontal=Math.random()<0.5;
+        let placed=false;
+        while(!placed){
+            const horizontal=Math.random()<.5;
             const r=Math.floor(Math.random()*10),c=Math.floor(Math.random()*10);
-            let cells=[];
+            const cells=[];
             for(let k=0;k<len;k++){
                 const rr=r+(horizontal?0:k),cc=c+(horizontal?k:0);
-                if(rr>=10||cc>=10){cells=[];break;}
+                if(rr>=10||cc>=10)break;
                 cells.push(rr*10+cc);
             }
-            if(!cells.length)continue;
-            if(cells.some(i=>{
+            if(cells.length!==len)continue;
+            const valid=cells.every(i=>{
                 const rr=Math.floor(i/10),cc=i%10;
                 for(let y=-1;y<=1;y++)for(let x=-1;x<=1;x++){
                     const a=rr+y,b=cc+x;
-                    if(a>=0&&a<10&&b>=0&&b<10&&board[a*10+b])return true;
+                    if(a>=0&&a<10&&b>=0&&b<10&&board[a*10+b])return false;
                 }
-                return false;
-            }))continue;
-            cells.forEach(i=>board[i]=1);placed=true;
+                return true;
+            });
+            if(valid){cells.forEach(i=>board[i]=1);placed=true;}
         }
     }
 }
 function drawShips(){
     const c=document.getElementById("gameContent");c.innerHTML="<p>Поле противника</p>";
-    const grid=document.createElement("div");grid.className="board";grid.style.gridTemplateColumns="repeat(10,30px)";grid.style.gap="3px";
+    const grid=document.createElement("div");
+    grid.className="board";
+    grid.style.gridTemplateColumns="repeat(10,30px)";
+    grid.style.gap="3px";
     for(let i=0;i<100;i++){
-        const b=document.createElement("button");b.className="cell";b.style.width="30px";b.style.height="30px";b.style.fontSize="15px";
-        b.textContent=gameData.shots[i]?(gameData.enemy[i]?"✖":"·"):"";
+        const b=document.createElement("button");
+        b.className="cell";b.style.width="30px";b.style.height="30px";b.style.fontSize="14px";
+        b.textContent=gameData.shots[i]?(gameData.enemy[i]===2?"✖":"·"):"";
         b.disabled=gameData.shots[i]||gameData.over;
-        b.onclick=()=>shipShot(i);grid.append(b);
+        b.onclick=()=>shipShot(i);
+        grid.append(b);
     }
     c.append(grid);
-    c.insertAdjacentHTML("beforeend","<p>Твоё поле (синие клетки — твои корабли)</p>");
-    const own=document.createElement("div");own.className="board";own.style.gridTemplateColumns="repeat(10,30px)";own.style.gap="3px";
+    c.insertAdjacentHTML("beforeend","<p>Твоё поле</p>");
+    const own=document.createElement("div");
+    own.className="board";own.style.gridTemplateColumns="repeat(10,30px)";own.style.gap="3px";
     for(let i=0;i<100;i++){
         const x=document.createElement("span");
         x.style.width="30px";x.style.height="30px";x.style.borderRadius="4px";
         x.style.background=gameData.player[i]?"#3978a5":"#58321e";
-        x.style.display="flex";x.style.justifyContent="center";x.style.alignItems="center";
-        x.textContent=gameData.botShots[i]?(gameData.player[i]?"✖":"·"):"";
+        x.style.display="flex";x.style.alignItems="center";x.style.justifyContent="center";
+        x.textContent=gameData.botShots[i]?(gameData.player[i]===2?"✖":"·"):"";
         own.append(x);
     }
     c.append(own);
@@ -456,53 +479,59 @@ function shipShot(i){
     const d=gameData;if(d.over||d.shots[i])return;
     d.shots[i]=true;
     if(d.enemy[i])d.enemy[i]=2;
-    if(d.enemy.filter(x=>x===2).length===20){d.over=true;drawShips();setStatus("Ты победил! Все корабли найдены!");return;}
+    if(d.enemy.filter(x=>x===2).length===20){
+        d.over=true;drawShips();setStatus("Ты победил!");return;
+    }
     botShipShot();
-    if(d.player.filter(x=>x===2).length===20){d.over=true;drawShips();setStatus("Бот победил!");return;}
+    if(d.player.filter(x=>x===2).length===20){
+        d.over=true;drawShips();setStatus("Бот победил!");return;
+    }
     drawShips();
-    setStatus(d.enemy[i]===2?"Попадание!":"Мимо. Теперь ход бота.");
+    setStatus(d.enemy[i]===2?"Попадание!":"Мимо! Ход бота.");
 }
 function botShipShot(){
     const d=gameData;
-    let choices=[];
+    const choices=[];
     for(let i=0;i<100;i++)if(!d.botShots[i])choices.push(i);
     if(!choices.length)return;
-    let i=choices[Math.floor(Math.random()*choices.length)];
+    const i=choices[Math.floor(Math.random()*choices.length)];
     d.botShots[i]=true;
     if(d.player[i])d.player[i]=2;
 }
 
-// СПИЧКИ: 12, берём 1–3, взявший последнюю проигрывает
+// СПИЧКИ
 function startMatches(){
-    showGame("Спички","На столе 12 спичек. Бери от 1 до 3. Кто возьмёт последнюю — проиграет.");
-    gameData={count:12,turn:"you",over:false};
+    showGame("Спички","12 спичек. Бери 1–3. Кто возьмёт последнюю — проиграл!");
+    gameData={count:12,over:false};
     drawMatches();
 }
 function drawMatches(){
     const d=gameData,c=document.getElementById("gameContent");c.innerHTML="";
-    const pile=document.createElement("div");pile.style.fontSize="28px";pile.style.margin="20px";
+    const pile=document.createElement("div");
+    pile.style.fontSize="25px";pile.style.margin="20px";
     pile.textContent="🪵 ".repeat(d.count);
     c.append(pile);
     for(let n=1;n<=3;n++){
-        const b=document.createElement("button");b.textContent="Взять "+n;
-        b.disabled=d.over||d.turn!=="you"||n>d.count;
+        const b=document.createElement("button");
+        b.textContent="Взять "+n;
+        b.disabled=d.over||n>d.count;
         b.onclick=()=>takeMatches(n);
         c.append(b);
     }
-    setStatus("Осталось спичек: "+d.count);
+    setStatus("Осталось: "+d.count);
 }
 function takeMatches(n){
-    const d=gameData;if(d.over||d.turn!=="you"||n>d.count)return;
+    const d=gameData;if(d.over||n>d.count)return;
     d.count-=n;
-    if(d.count===0){d.over=true;drawMatches();setStatus("Ты взял последнюю спичку. Бот победил!");return;}
-    d.turn="bot";drawMatches();
+    if(d.count===0){d.over=true;drawMatches();setStatus("Ты взял последнюю. Бот победил!");return;}
+    drawMatches();
     setTimeout(()=>{
         let take=(d.count-1)%4;
         if(take===0)take=1;
         take=Math.min(take,3,d.count);
         d.count-=take;
-        if(d.count===0){d.over=true;drawMatches();setStatus("Бот взял последнюю спичку. Ты победил!");return;}
-        d.turn="you";drawMatches();
+        if(d.count===0){d.over=true;drawMatches();setStatus("Бот взял последнюю. Ты победил!");return;}
+        drawMatches();
         setStatus("Бот взял "+take+". Твой ход!");
     },600);
 }
@@ -510,7 +539,8 @@ function takeMatches(n){
 document.getElementById("nickname").value=localStorage.getItem("kp_name")||"";
 if(localStorage.getItem("kp_color")){
     playerColor=localStorage.getItem("kp_color");
-    document.querySelectorAll(".color").forEach(x=>x.classList.toggle("selected",x.dataset.c===playerColor));
+    document.querySelectorAll(".color").forEach(x=>
+        x.classList.toggle("selected",x.dataset.c===playerColor));
 }
 </script>
 </body>
