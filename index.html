@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КотоPlay — Играй и развлекайся!</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #21130d;
+            color: #fff1e5;
+        }
+
+        header {
+            padding: 22px 7%;
+            background: #321b10;
+            border-bottom: 2px solid #653319;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: #ff963f;
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .login {
+            background: #ff852b;
+            color: #281307;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 65px auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .welcome {
+            background: #392014;
+            padding: 55px 20px;
+            border-radius: 22px;
+            border: 1px solid #75401e;
+        }
+
+        h1 {
+            font-size: 42px;
+            color: #ff963f;
+        }
+
+        .play {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 16px 35px;
+            background: #ff852b;
+            color: #281307;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+
+        .games {
+            margin-top: 55px;
+        }
+
+        .game-card {
+            background: #392014;
+            border: 1px solid #653319;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 18px;
+            text-align: left;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #bd9479;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">🐱 КотоPlay</div>
+    <button class="login">Войти</button>
+</header>
+
+<main>
+    <section class="welcome">
+        <h1>Добро пожаловать в КотоPlay!</h1>
+        <p>Твоя территория развлечений.</p>
+        <a class="play" href="#games">ИГРАТЬ</a>
+    </section>
+
+    <section class="games" id="games">
+        <h2>Наши игры</h2>
+
+        <div class="game-card">
+            <h3>🎮 Мини онлайн игры</h3>
+            <p>Пять увлекательных настольных игр в одном месте!</p>
+            <button class="login">Открыть</button>
+        </div>
+    </section>
+</main>
+
+<footer>
+    © 2026 КотоPlay
+</footer>
+
+</body>
+</html>
