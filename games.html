@@ -639,8 +639,39 @@ function showDatabaseError(error) {
 // ==========================================
 
 let currentRoom = null;
+const roomsBeingExpired = new Set();
+
+async function cleanupExpiredRooms() {
+    if (!db) return;
+    const { data, error } = await db.from("game_rooms").select("*").in("status", ["waiting", "playing"]);
+    if (error || !data) return;
+    const now = Date.now();
+    for (const room of data) {
+        const createdAt = Date.parse(room.created_at || "") || now;
+        const players = Array.isArray(room.players) ? room.players : [];
+        const state = room.game_state || {};
+        const isWaiting = room.status === "waiting" || players.length < 2;
+        const lastActivity = Number(state.lastActivityAt) || createdAt;
+        if (isWaiting && now - createdAt >= 5 * 60 * 1000) {
+            await db.from("game_rooms").delete().eq("id", room.id).eq("status", "waiting");
+            continue;
+        }
+        if (!isWaiting && now - lastActivity >= 2 * 60 * 1000 && !roomsBeingExpired.has(room.id)) {
+            roomsBeingExpired.add(room.id);
+            await db.from("game_rooms").update({
+                status: "finished",
+                game_state: { ...state, phase: "draw", draw: true, winner: null, resultMessage: "Ничья: 2 минуты без ходов", finishedAt: now }
+            }).eq("id", room.id).eq("status", "playing");
+            setTimeout(async () => {
+                await db.from("game_rooms").delete().eq("id", room.id);
+                roomsBeingExpired.delete(room.id);
+            }, 4000);
+        }
+    }
+}
 
 async function loadRooms() {
+    await cleanupExpiredRooms();
     const list = document.getElementById("roomsList");
 
     if (!db) {
@@ -727,7 +758,8 @@ document.getElementById("createRoom").onclick = async () => {
             round: 1,
             targetMs: 6000,
             startAt: null,
-            results: null
+            results: null,
+            lastActivityAt: Date.now()
         };
         const { data, error } = await db
             .from("game_rooms")
@@ -759,7 +791,7 @@ document.getElementById("createRoom").onclick = async () => {
             game,
             status: "waiting",
             players: [{ nickname, color: playerColor }],
-            game_state: {}
+            game_state: { lastActivityAt: Date.now() }
         });
 
     if (error) {
@@ -798,7 +830,8 @@ async function joinRoom(room) {
             round: 1,
             targetMs: 6000,
             startAt: null,
-            results: null
+            results: null,
+            lastActivityAt: Date.now()
         };
         const { data, error } = await db
             .from("game_rooms")
@@ -822,9 +855,10 @@ async function joinRoom(room) {
     }
 
     players.push({ nickname, color: playerColor });
+    const state = { ...(room.game_state || {}), lastActivityAt: Date.now() };
     const { data, error } = await db
         .from("game_rooms")
-        .update({ players, status: "playing" })
+        .update({ players, game_state: state, status: "playing" })
         .eq("id", room.id)
         .eq("status", "waiting")
         .select()
@@ -895,15 +929,8 @@ function startGame(game, roomContext = null) {
     if (game === "battle") startBattle();
     if (game === "matches") startMatches();
     if (game === "good_countdown") {
-        if (roomContext) {
-            startGoodCountdown(roomContext.id, roomContext.playerIndex);
-        } else if (currentRoom && currentRoom.game === "good_countdown") {
-            const players = Array.isArray(currentRoom.players) ? currentRoom.players : [];
-            const playerIndex = players.findIndex(p => p.nickname === nickname || p.name === nickname);
-            startGoodCountdown(currentRoom.id, playerIndex >= 0 ? playerIndex : 0);
-        } else {
-            createAndStartGoodCountdownRoom();
-        }
+        if (roomContext) startGoodCountdown(roomContext.id, roomContext.playerIndex);
+        else startGoodCountdownBot();
     }
     if (game === "mini_monopoly") startMiniMonopoly();
 }
@@ -916,48 +943,10 @@ function openGoodCountdownRoom(roomId, playerIndex) {
     startGame("good_countdown", { id: roomId, playerIndex });
 }
 
-// Если игру запустили не кнопкой комнаты, сразу создаём комнату
-// и открываем саму игру без промежуточного информационного экрана.
-async function createAndStartGoodCountdownRoom() {
-    if (!db) {
-        showGame("⏱ Хороший отсчёт", "Не удалось подключиться к Supabase.");
-        gameArea.innerHTML = '<p class="muted">Проверь подключение к интернету и настройки Supabase.</p>';
-        return;
-    }
-
-    const player = { nickname, name: nickname, color: playerColor, score: 0, pressedAt: null };
-    const initialState = {
-        phase: "waiting",
-        players: [player],
-        round: 1,
-        targetMs: 6000,
-        startAt: null,
-        results: null
-    };
-    const { data, error } = await db.from("game_rooms").insert({
-        nickname,
-        player_color: playerColor,
-        game: "good_countdown",
-        status: "waiting",
-        players: [player],
-        game_state: initialState
-    }).select().single();
-
-    if (error) {
-        showGame("⏱ Хороший отсчёт", "Не удалось создать игровую комнату.");
-        gameArea.innerHTML = '<p class="muted">' + escapeHTML(showDatabaseError(error)) + '</p>';
-        return;
-    }
-
-    currentRoom = data;
-    await loadRooms();
-    openGoodCountdownRoom(data.id, 0);
-}
-
 function startGoodCountdown(roomId, playerIndex) {
     showGame(
         "⏱ Хороший отсчёт",
-        "Онлайн-матч до трёх побед. Используется комната из общего лобби КотоPlay."
+        "Онлайн-матч из 3 раундов. Используется комната из общего лобби KotoPlay."
     );
 
     const src = "good_countdown.html?roomId=" + encodeURIComponent(roomId) +
@@ -965,6 +954,18 @@ function startGoodCountdown(roomId, playerIndex) {
     gameArea.innerHTML = `
         <div class="panel" style="padding:8px;overflow:hidden">
             <iframe src="${src}" title="Хороший отсчёт"
+                style="display:block;width:100%;height:760px;border:0;border-radius:10px;background:#17120f"
+                allow="fullscreen"></iframe>
+        </div>
+    `;
+}
+
+function startGoodCountdownBot() {
+    showGame("⏱ Хороший отсчёт", "Игра с КотоБотом · 3 раунда · у каждого своя случайная цель.");
+    const src = "good_countdown.html?mode=bot&name=" + encodeURIComponent(nickname);
+    gameArea.innerHTML = `
+        <div class="panel" style="padding:8px;overflow:hidden">
+            <iframe src="${src}" title="Хороший отсчёт с ботом"
                 style="display:block;width:100%;height:760px;border:0;border-radius:10px;background:#17120f"
                 allow="fullscreen"></iframe>
         </div>
@@ -1687,9 +1688,8 @@ function startMatches() {
 // ==========================================
 
 setInterval(() => {
-    if (!lobbyScreen.classList.contains("hidden")) {
-        loadRooms();
-    }
+    cleanupExpiredRooms();
+    if (!lobbyScreen.classList.contains("hidden")) loadRooms();
 }, 10000);
 
 </script>

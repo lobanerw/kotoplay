@@ -24,9 +24,20 @@ footer{font-size:12px;color:#987e69;margin-top:18px}
 <body>
 <main>
   <h1>⏱ Хороший отсчёт</h1>
-  <section id="waiting" class="screen active">
+  <p>Поймай нужный момент! Побеждает тот, кто нажмёт кнопку ближе всего к окончанию заданного времени. Матч идёт до трёх побед.</p>
+
+  <section id="setup" class="screen active">
     <div class="card">
-      <div class="status" id="waitingText">Подключаемся к игре…</div>
+      <p>«Хороший отсчёт» использует общие комнаты КотоPlay.</p>
+      <p class="hint">Создай комнату или войди в комнату «Хороший отсчёт» через общее лобби. Отдельный поиск соперника и ввод имени здесь не нужны.</p>
+      <div class="status" id="setupStatus">Подключаемся к комнате…</div>
+    </div>
+  </section>
+
+  <section id="waiting" class="screen">
+    <div class="card">
+      <p id="waitingText">Ищем соперника…</p>
+      <button class="secondary" id="backBtn">Назад</button>
     </div>
   </section>
 
@@ -82,15 +93,15 @@ function normalizePlayers(row){
  }));
 }
 function ready(){
- if(!sb){show('waiting');setStatus('waitingText','Не удалось подключиться к Supabase. Проверь интернет и обнови страницу.');return false}
- if(!roomId){show('waiting');setStatus('waitingText','Комната не передана из общего лобби. Вернись в лобби и запусти игру из комнаты.');return false}
- if(myIndex!==0&&myIndex!==1){show('waiting');setStatus('waitingText','Не удалось определить место игрока в комнате.');return false}
+ if(!sb){setStatus('setupStatus','Не удалось загрузить Supabase. Проверь подключение к интернету.');return false}
+ if(!roomId){setStatus('setupStatus','Сначала создай комнату или войди в комнату «Хороший отсчёт» через общее лобби КотоPlay.');return false}
+ if(myIndex!==0&&myIndex!==1){setStatus('setupStatus','Не удалось определить место игрока в комнате.');return false}
  return true;
 }
 async function loadRoom(){
  if(!ready())return;
  const {data,error}=await sb.from('game_rooms').select('*').eq('id',roomId).maybeSingle();
- if(error||!data){show('waiting');setStatus('waitingText','Не удалось открыть комнату: '+(error?.message||'комната не найдена'));return}
+ if(error||!data){setStatus('setupStatus','Не удалось открыть комнату: '+(error?.message||'комната не найдена'));return}
  room=data;
  gameState=data.game_state||{};
  const players=normalizePlayers(data);
@@ -98,12 +109,12 @@ async function loadRoom(){
   gameState={phase:players.length>=2?'waiting':'waiting',players,round:1,targetMs:6000,startAt:null,results:null};
  }
  else gameState.players=normalizePlayers(data);
- if(players.length<2){show('waiting');$('waitingText').textContent='Ждём второго игрока…';}
+ if(players.length<2){show('waiting');$('waitingText').textContent='Комната открыта. Ждём второго игрока…';}
  else renderState();
  await subscribeRoom();
  startPolling();
 }
-function openWaiting(){show('waiting');$('waitingText').textContent='Ждём второго игрока…';}
+function openWaiting(){show('waiting');$('waitingText').textContent='Комната открыта. Ждём второго игрока…';}
 async function subscribeRoom(){
  if(!sb||!roomId)return;
  if(channel)await sb.removeChannel(channel);
@@ -129,13 +140,13 @@ async function saveState(patch){
  else if(data)room=data;
 }
 function renderState(){
- if(!gameState.players||gameState.players.length<2){show('waiting');$('waitingText').textContent='Ждём второго игрока…';return}
+ if(!gameState.players||gameState.players.length<2){show('waiting');$('waitingText').textContent='Комната открыта. Ждём второго игрока…';return}
  $('p1name').textContent=gameState.players[0].name;$('p2name').textContent=gameState.players[1].name;
  $('p1score').textContent=gameState.players[0].score;$('p2score').textContent=gameState.players[1].score;
  if(gameState.phase==='finished'){show('finished');const w=gameState.winner;$('winnerText').textContent='Победил '+gameState.players[w].name+'!';$('finishText').textContent='Счёт: '+gameState.players[0].score+' : '+gameState.players[1].score;return}
  if(gameState.phase==='playing'){show('game');$('roundStatus').textContent='Раунд '+gameState.round+'. Отсчёт до нуля!';if(gameState.players[myIndex].pressedAt!==null){$('pressBtn').disabled=true;$('myStatus').textContent='Ты уже нажал. Ждём соперника…'}else if(Date.now()<(gameState.startAt||0)){$('pressBtn').disabled=true;$('myStatus').textContent='Приготовься… отсчёт скоро начнётся.'}else{$('pressBtn').disabled=false;$('myStatus').textContent='Нажми кнопку как можно ближе к нулю!'}animateTimer()}
  else if(gameState.phase==='result'){show('game');$('pressBtn').disabled=true;const r=gameState.results;$('roundStatus').textContent=r&&r.winner>=0?'Раунд выиграл: '+gameState.players[r.winner].name:'Ничья в раунде';$('myStatus').textContent='Результат: '+(r?Math.round(r.diff[0])+' мс против '+Math.round(r.diff[1])+' мс':'');$('gameStatus').textContent='Следующий раунд начнётся через несколько секунд.';if(myIndex===0&&scheduledRound!==gameState.round){scheduledRound=gameState.round;setTimeout(()=>{if(gameState.phase==='result'&&gameState.players.every(p=>p.score<3)){pressed=false;beginNextRound()}},2500)}}
- else if(gameState.phase==='waiting'){show('waiting');$('waitingText').textContent='Соперник подключён. Начинаем…';if(myIndex===0&&gameState.players.length===2&&lastStartedRound!==gameState.round){lastStartedRound=gameState.round;beginRound();}}
+ else if(gameState.phase==='waiting'&&myIndex===0&&gameState.players.length===2&&lastStartedRound!==gameState.round){lastStartedRound=gameState.round;beginRound();}
 }
 function animateTimer(){if(raf)cancelAnimationFrame(raf);const tick=()=>{if(!gameState.startAt||gameState.phase!=='playing')return;let elapsed=Math.max(0,Date.now()-gameState.startAt);let remain=Math.max(0,gameState.targetMs-elapsed);$('timer').textContent=(remain/1000).toFixed(2);$('meterFill').style.width=(Math.min(100,elapsed/gameState.targetMs*100))+'%';if(remain>0)raf=requestAnimationFrame(tick);else $('timer').textContent='0.00'};tick()}
 async function beginRound(){
@@ -156,6 +167,7 @@ $('pressBtn').onclick=async()=>{
  }
 };
 async function beginNextRound(){gameState.round++;await beginRound()}
+$('backBtn').onclick=()=>{if(poll)clearInterval(poll);setStatus('setupStatus','Вернись в общее лобби КотоPlay, чтобы выбрать другую комнату.');show('setup')};
 $('rematchBtn').onclick=async()=>{
  if(myIndex!==0)return;
  const players=gameState.players.map(p=>({...p,score:0,pressedAt:null}));
@@ -163,7 +175,7 @@ $('rematchBtn').onclick=async()=>{
  await saveState({phase:'waiting',players,round:1,targetMs:6000,startAt:null,results:null,winner:null});
  renderState();
 };
-$('exitBtn').onclick=()=>{if(poll)clearInterval(poll);if(channel)sb.removeChannel(channel);$('finishText').textContent='Матч завершён. Вернись в общее лобби КотоPlay, чтобы выбрать другую комнату.';$('exitBtn').disabled=true;};
+$('exitBtn').onclick=()=>{if(poll)clearInterval(poll);show('setup');setStatus('setupStatus','Вернись в общее лобби КотоPlay, чтобы выбрать другую комнату.');};
 loadRoom();
 </script>
 </body>
