@@ -895,10 +895,14 @@ function startGame(game, roomContext = null) {
     if (game === "battle") startBattle();
     if (game === "matches") startMatches();
     if (game === "good_countdown") {
-        if (roomContext) startGoodCountdown(roomContext.id, roomContext.playerIndex);
-        else {
-            showGame("⏱ Хороший отсчёт", "Эта игра запускается через общие комнаты КотоPlay.");
-            gameArea.innerHTML = '<p class="muted">Создай комнату «Хороший отсчёт» или нажми «Играть» в уже открытой комнате в общем лобби.</p>';
+        if (roomContext) {
+            startGoodCountdown(roomContext.id, roomContext.playerIndex);
+        } else if (currentRoom && currentRoom.game === "good_countdown") {
+            const players = Array.isArray(currentRoom.players) ? currentRoom.players : [];
+            const playerIndex = players.findIndex(p => p.nickname === nickname || p.name === nickname);
+            startGoodCountdown(currentRoom.id, playerIndex >= 0 ? playerIndex : 0);
+        } else {
+            createAndStartGoodCountdownRoom();
         }
     }
     if (game === "mini_monopoly") startMiniMonopoly();
@@ -910,6 +914,44 @@ function startGame(game, roomContext = null) {
 
 function openGoodCountdownRoom(roomId, playerIndex) {
     startGame("good_countdown", { id: roomId, playerIndex });
+}
+
+// Если игру запустили не кнопкой комнаты, сразу создаём комнату
+// и открываем саму игру без промежуточного информационного экрана.
+async function createAndStartGoodCountdownRoom() {
+    if (!db) {
+        showGame("⏱ Хороший отсчёт", "Не удалось подключиться к Supabase.");
+        gameArea.innerHTML = '<p class="muted">Проверь подключение к интернету и настройки Supabase.</p>';
+        return;
+    }
+
+    const player = { nickname, name: nickname, color: playerColor, score: 0, pressedAt: null };
+    const initialState = {
+        phase: "waiting",
+        players: [player],
+        round: 1,
+        targetMs: 6000,
+        startAt: null,
+        results: null
+    };
+    const { data, error } = await db.from("game_rooms").insert({
+        nickname,
+        player_color: playerColor,
+        game: "good_countdown",
+        status: "waiting",
+        players: [player],
+        game_state: initialState
+    }).select().single();
+
+    if (error) {
+        showGame("⏱ Хороший отсчёт", "Не удалось создать игровую комнату.");
+        gameArea.innerHTML = '<p class="muted">' + escapeHTML(showDatabaseError(error)) + '</p>';
+        return;
+    }
+
+    currentRoom = data;
+    await loadRooms();
+    openGoodCountdownRoom(data.id, 0);
 }
 
 function startGoodCountdown(roomId, playerIndex) {
