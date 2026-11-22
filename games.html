@@ -961,15 +961,117 @@ function startGoodCountdown(roomId, playerIndex) {
 }
 
 function startGoodCountdownBot() {
-    showGame("⏱ Хороший отсчёт", "Игра с КотоБотом · 3 раунда · у каждого своя случайная цель.");
-    const src = "good_countdown.html?mode=bot&name=" + encodeURIComponent(nickname);
+    // Локальный режим: не создаёт онлайн-комнату и не обращается к Supabase.
+    let round = 1;
+    let userScore = 0;
+    let botScore = 0;
+    let startAt = 0;
+    let userPressedAt = null;
+    let botPressedAt = null;
+    let botTimer = null;
+    let nextRoundTimer = null;
+    let finished = false;
+    let userTarget = 0;
+    let botTarget = 0;
+
+    const randomTarget = () => Math.floor(2500 + Math.random() * 5001);
+    const clearTimers = () => {
+        if (botTimer) clearTimeout(botTimer);
+        if (nextRoundTimer) clearTimeout(nextRoundTimer);
+        botTimer = nextRoundTimer = null;
+    };
+
+    showGame("⏱ Хороший отсчёт", "Игра с КотоБотом · 3 раунда · без онлайн-комнаты.");
     gameArea.innerHTML = `
-        <div class="panel" style="padding:8px;overflow:hidden">
-            <iframe src="${src}" title="Хороший отсчёт с ботом"
-                style="display:block;width:100%;height:760px;border:0;border-radius:10px;background:#17120f"
-                allow="fullscreen"></iframe>
+      <div class="panel" style="max-width:760px;margin:0 auto;padding:22px;text-align:center">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+          <div class="panel"><b>${(nickname || "Ты").replace(/[&<>"']/g, "")}</b><div id="gcUserScore" style="font-size:32px;color:#f5a34b">0</div><small>Твои очки</small></div>
+          <div class="panel"><b>🤖 КотоБот</b><div id="gcBotScore" style="font-size:32px;color:#8dbbff">0</div><small>Очки бота</small></div>
         </div>
-    `;
+        <h2 id="gcRound">Раунд 1 из 3</h2>
+        <div id="gcTimer" style="font-size:64px;font-weight:900;letter-spacing:8px;color:#ffd166;margin:18px">••••</div>
+        <p id="gcTarget" style="font-weight:700;color:#ffd166">Твоя цель: —</p>
+        <p id="gcStatus">Приготовься к старту!</p>
+        <button id="gcPress" class="primary-btn" style="font-size:22px;padding:18px 36px" disabled>НАЖАТЬ!</button>
+        <p id="gcResult" style="min-height:48px;margin-top:18px"></p>
+        <button id="gcAgain" class="secondary-btn" style="display:none">Сыграть ещё раз</button>
+        <button id="gcBack" class="secondary-btn">В лобби</button>
+      </div>`;
+
+    const el = id => document.getElementById(id);
+    const pressButton = el('gcPress');
+    function updateScore() {
+      el('gcUserScore').textContent = userScore;
+      el('gcBotScore').textContent = botScore;
+    }
+    function beginRound() {
+      if (finished) return;
+      userPressedAt = null;
+      botPressedAt = null;
+      userTarget = randomTarget();
+      botTarget = randomTarget();
+      startAt = Date.now() + 1800;
+      el('gcRound').textContent = `Раунд ${round} из 3`;
+      el('gcTimer').textContent = '••••';
+      el('gcTarget').textContent = `Твоя цель: ${(userTarget / 1000).toFixed(2)} секунды`;
+      el('gcStatus').textContent = 'Приготовься…';
+      el('gcResult').textContent = '';
+      pressButton.disabled = true;
+      const wait = Math.max(0, startAt - Date.now());
+      setTimeout(() => {
+        if (finished || round > 3) return;
+        if (userPressedAt === null) {
+          pressButton.disabled = false;
+          el('gcStatus').textContent = 'Отсчёт пошёл! Нажми как можно ближе к своей цели.';
+        }
+      }, wait);
+      const botReaction = Math.floor((Math.random() - 0.5) * 900);
+      const botDelay = Math.max(200, startAt + botTarget + botReaction - Date.now());
+      botTimer = setTimeout(() => {
+        if (finished || botPressedAt !== null) return;
+        botPressedAt = Date.now() - startAt;
+        el('gcStatus').textContent = userPressedAt === null ? 'КотоБот уже нажал. Твой ход!' : 'Оба игрока нажали!';
+        finishRoundIfReady();
+      }, botDelay);
+    }
+    function finishRoundIfReady() {
+      if (userPressedAt === null || botPressedAt === null || finished) return;
+      clearTimers();
+      const userDiff = Math.abs(userPressedAt - userTarget);
+      const botDiff = Math.abs(botPressedAt - botTarget);
+      let result;
+      if (userDiff < botDiff) { userScore++; result = 'Ты выиграл раунд!'; }
+      else if (botDiff < userDiff) { botScore++; result = 'КотоБот выиграл раунд!'; }
+      else result = 'Раунд завершился вничью!';
+      updateScore();
+      pressButton.disabled = true;
+      el('gcStatus').textContent = result;
+      el('gcResult').textContent = `Твоя точность: ${userDiff} мс · точность КотоБота: ${botDiff} мс`;
+      if (round >= 3) {
+        finished = true;
+        const winner = userScore > botScore ? 'Ты победил!' : botScore > userScore ? 'Победил КотоБот!' : 'Ничья!';
+        el('gcRound').textContent = 'Матч завершён';
+        el('gcStatus').textContent = winner;
+        el('gcResult').textContent = `Итог за 3 раунда: ${userScore} : ${botScore}`;
+        el('gcAgain').style.display = 'inline-block';
+      } else {
+        round++;
+        nextRoundTimer = setTimeout(beginRound, 2200);
+      }
+    }
+    pressButton.onclick = () => {
+      if (finished || userPressedAt !== null || Date.now() < startAt) return;
+      userPressedAt = Date.now() - startAt;
+      pressButton.disabled = true;
+      el('gcStatus').textContent = botPressedAt === null ? 'Нажатие принято. Ждём КотоБота…' : 'Оба игрока нажали!';
+      finishRoundIfReady();
+    };
+    el('gcAgain').onclick = () => {
+      clearTimers(); round = 1; userScore = 0; botScore = 0; finished = false;
+      updateScore(); beginRound();
+    };
+    el('gcBack').onclick = () => { clearTimers(); backToLobby(); };
+    beginRound();
 }
 
 function startMiniMonopoly() {
