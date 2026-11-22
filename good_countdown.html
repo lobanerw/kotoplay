@@ -77,7 +77,7 @@ footer{font-size:12px;color:#987e69;margin-top:18px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://wrziasmcufzmwjlnlnbs.supabase.co";
-const SUPABASE_KEY = "ВСТАВЬ_СЮДА_СВОЙ_sb_publishable_КЛЮЧ";
+const SUPABASE_KEY = "sb_publishable_vflNoh6aWpx0o90JzlDBLg_gxijRwS5";
 const sb = window.supabase && SUPABASE_KEY.startsWith("sb_publishable_") ? window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY) : null;
 const $=id=>document.getElementById(id);
 let room=null, channel=null, myId=crypto.randomUUID(), myName="", myIndex=0, gameState={}, poll=null, raf=null, localStart=0, pressed=false, scheduledRound=null;
