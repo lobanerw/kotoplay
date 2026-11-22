@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Приключение Котости</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#15131b;color:#fff;font-family:Arial,sans-serif}
+  #wrap{position:relative;width:100%;height:100%;display:grid;place-items:center;background:radial-gradient(circle at center,#292331,#111018)}
+  canvas{display:block;width:min(100vw,160vh);height:min(62.5vw,100vh);max-width:100vw;max-height:100vh;image-rendering:pixelated;background:#243c2b;border:3px solid #51445d;box-shadow:0 12px 50px #0009}
+  .panel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#100e18d9;padding:18px}
+  .box{width:min(560px,95vw);max-height:92%;overflow:auto;background:#282331;border:3px solid #786486;border-radius:12px;padding:24px;text-align:center;box-shadow:0 12px 40px #0009}
+  h1{margin:0 0 8px;color:#ffcc75;font-size:clamp(25px,5vw,42px)}
+  h2{color:#ffcc75;margin:0 0 12px}
+  p{line-height:1.5;color:#e4dce9}
+  button{border:0;border-bottom:4px solid #9b542c;border-radius:8px;background:#e58b45;color:#21150e;font-weight:bold;font-size:16px;padding:12px 18px;margin:6px;cursor:pointer}
+  button:hover{background:#ffad62}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .small{font-size:13px;color:#bdb2c7}
+  .choices{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+  .choice{background:#383044;color:white;border:2px solid #8a759c;border-bottom-width:4px;min-height:125px}
+  .choice strong{display:block;color:#ffcf80;margin-bottom:8px}
+  .choice span{font-size:13px;font-weight:normal;line-height:1.35}
+  #hud{position:absolute;top:12px;left:12px;right:12px;display:none;pointer-events:none;text-shadow:2px 2px #17121d;font-weight:bold;font-size:14px}
+  .hudrow{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .hudbox{background:#17131dc9;border:2px solid #776582;border-radius:7px;padding:8px 10px;min-width:150px}
+  .bar{height:12px;background:#493c4c;border:1px solid #17121d;margin-top:5px;border-radius:3px;overflow:hidden}
+  .fill{height:100%;width:100%;background:#66c86c}
+  #xpFill{background:#e8bb55}
+  #bossHud{display:none;position:absolute;bottom:12px;left:20%;right:20%;text-align:center;text-shadow:2px 2px #000;font-weight:bold}
+  #bossHud .bar{height:15px}
+  #toast{position:absolute;top:90px;left:50%;transform:translateX(-50%);background:#17131de8;border:2px solid #ffcc75;border-radius:7px;padding:9px 14px;display:none;font-weight:bold}
+  @media(max-width:600px){.choices{grid-template-columns:1fr}.choice{min-height:75px}.box{padding:16px}#hud{font-size:11px}.hudbox{min-width:0;padding:5px}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="960" height="600"></canvas>
+  <div id="hud">
+    <div class="hudrow">
+      <div class="hudbox">
+        <div id="levelText">Уровень 1/5</div>
+        <div>Здоровье: <span id="hpText">100/100</span></div>
+        <div class="bar"><div class="fill" id="hpFill"></div></div>
+        <div>Опыт: <span id="xpText">0/20</span></div>
+        <div class="bar"><div class="fill" id="xpFill"></div></div>
+      </div>
+      <div class="hudbox" style="text-align:right">
+        <div>Уровень Котости: <span id="charLevel">1</span></div>
+        <div>Оружие: <span id="weaponText">нет</span></div>
+        <div class="small">WASD — движение · P — пауза</div>
+      </div>
+    </div>
+  </div>
+  <div id="bossHud"><div id="bossName">Босс</div><div class="bar"><div class="fill" id="bossFill" style="background:#d65b61"></div></div></div>
+  <div id="toast"></div>
+  <div class="panel" id="menu">
+    <div class="box">
+      <h1>Приключение Котости</h1>
+      <p>Мир изменился. Исследуй новые земли, сражайся с врагами и побеждай боссов.</p>
+      <p class="small">Управление: WASD. Оружие атакует автоматически. На повышении уровня выбери одно из трёх улучшений.</p>
+      <button id="continueBtn">Начать игру</button>
+      <button id="resetProgressBtn">Сбросить открытые уровни</button>
+      <p class="small" id="progressText"></p>
+    </div>
+  </div>
+  <div class="panel" id="levelPanel" style="display:none">
+    <div class="box">
+      <h2 id="levelHeading">Уровень 1</h2>
+      <p id="levelDescription"></p>
+      <button id="startLevelBtn">Начать уровень</button>
+      <button id="backMenuBtn">В меню</button>
+    </div>
+  </div>
+  <div class="panel" id="upgradePanel" style="display:none">
+    <div class="box">
+      <h2>Новый уровень!</h2>
+      <p>Выбери одно улучшение. Пропустить выбор нельзя.</p>
+      <div class="choices" id="choices"></div>
+    </div>
+  </div>
+  <div class="panel" id="pausePanel" style="display:none">
+    <div class="box">
+      <h2>Пауза</h2>
+      <button id="resumeBtn">Продолжить</button>
+      <button id="pauseMenuBtn">В меню</button>
+    </div>
+  </div>
+  <div class="panel" id="endPanel" style="display:none">
+    <div class="box">
+      <h1 id="endTitle">Уровень пройден!</h1>
+      <p id="endText"></p>
+      <button id="nextBtn">Следующий уровень</button>
+      <button id="againBtn">Начать кампанию заново</button>
+      <button id="endMenuBtn">В меню</button>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height,TILE=32;
+const $=id=>document.getElementById(id);
+const levels=[
+ {name:'Забытый лес',desc:'Среди старых деревьев появились незнакомые существа.',ground:'#416b3e',dark:'#2b4b31',obstacle:'tree',enemy:'Лесной слизень',boss:'Страж чащи',bossColor:'#8dba58'},
+ {name:'Песчаные земли',desc:'За лесом раскинулась жаркая пустыня с древними руинами.',ground:'#c69a54',dark:'#a77a3e',obstacle:'rock',enemy:'Песчаный жук',boss:'Песчаный голем',bossColor:'#d69a4c'},
+ {name:'Ледяная долина',desc:'Холодный ветер несёт следы неизвестной магии.',ground:'#79aebc',dark:'#53899c',obstacle:'ice',enemy:'Ледяной дух',boss:'Хранитель льда',bossColor:'#a8e9f2'},
+ {name:'Тёмные болота',desc:'Туман скрывает опасные тропы и странные огни.',ground:'#53664d',dark:'#35483e',obstacle:'stump',enemy:'Болотная тень',boss:'Топяной ужас',bossColor:'#82965a'},
+ {name:'Огненные земли',desc:'Последняя территория. Здесь скрывается причина перемен.',ground:'#9b573c',dark:'#713b34',obstacle:'lavaRock',enemy:'Угольный зверёк',boss:'Повелитель пламени',bossColor:'#f18a43'}
+];
+let state='menu',levelIndex=0,unlocked=Number(localStorage.getItem('kotosti_unlocked')||1);
+unlocked=Math.max(1,Math.min(5,unlocked));
+let world,player,enemies,particles,keys={},camera={x:0,y:0},last=0,spawnTimer=0,bossSpawned=false,boss=null,toastTimer=0;
+const WORLD_W=2600,WORLD_H=1900;
+let weapons=[],charLevel=1,xp=0,xpNeed=20,runLevel=1,damageBoost=1,speedBoost=1,maxHp=100;
+let lastAttack=0,levelKills=0;
+const weaponDefs={
+ blade:{name:'Меч',desc:'Крутится рядом с Котостью и поражает близких врагов.',damage:13,range:68,rate:650,type:'orbit'},
+ bow:{name:'Лук',desc:'Автоматически выпускает стрелы в ближайшего врага.',damage:17,range:310,rate:900,type:'projectile'},
+ magic:{name:'Посох',desc:'Создаёт магический снаряд, который ищет врага.',damage:22,range:270,rate:1200,type:'projectile'},
+ boomerang:{name:'Бумеранг',desc:'Летит к врагам и возвращается обратно.',damage:15,range:230,rate:1050,type:'projectile'},
+ fire:{name:'Огненный шар',desc:'Мощная атака с небольшим радиусом поражения.',damage:27,range:250,rate:1450,type:'projectile'}
+};
+const upgrades=[
+ {id:'blade',title:'Меч',text:'Получить новое оружие ближнего боя.'},
+ {id:'bow',title:'Лук',text:'Получить оружие для дальних атак.'},
+ {id:'magic',title:'Магический посох',text:'Получить магическое оружие.'},
+ {id:'boomerang',title:'Бумеранг',text:'Получить возвращающееся оружие.'},
+ {id:'fire',title:'Огненный шар',text:'Получить мощную огненную атаку.'},
+ {id:'damage',title:'Сильнее атаки',text:'Урон всего оружия увеличится на 25%.'},
+ {id:'speed',title:'Быстрые атаки',text:'Все оружие будет атаковать на 18% чаще.'},
+ {id:'health',title:'Запас сил',text:'Максимальное здоровье увеличится на 25.'}
+];
+function showPanel(id){['menu','levelPanel','upgradePanel','pausePanel','endPanel'].forEach(x=>$(x).style.display=x===id?'flex':'none');}
+function setToast(t){$('toast').textContent=t;$('toast').style.display='block';toastTimer=2;}
+function updateProgressText(){$('progressText').textContent='Открыто уровней: '+unlocked+' из 5';$('continueBtn').textContent=unlocked>1?'Продолжить кампанию':'Начать игру';}
+function showLevelSelect(i){levelIndex=i;const l=levels[i];$('levelHeading').textContent='Уровень '+(i+1)+': '+l.name;$('levelDescription').textContent=l.desc;$('startLevelBtn').disabled=i+1>unlocked;showPanel('levelPanel');}
+function beginLevel(i){
+ levelIndex=i;runLevel=1;charLevel=1;xp=0;xpNeed=20;weapons=[];damageBoost=1;speedBoost=1;maxHp=100;
+ player={x:WORLD_W/2,y:WORLD_H/2,hp:maxHp,maxHp,r:13,inv:0,face:1};
+ enemies=[];particles=[];boss=null;bossSpawned=false;spawnTimer=1.1;levelKills=0;camera.x=player.x-W/2;camera.y=player.y-H/2;
+ makeWorld();state='playing';showPanel('');$('hud').style.display='block';$('bossHud').style.display='none';updateHud();last=performance.now();requestAnimationFrame(loop);
+}
+function makeWorld(){
+ const l=levels[levelIndex];world={obstacles:[],decor:[]};
+ let seed=(levelIndex+1)*9187;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+ for(let i=0;i<190;i++){let x=80+rand()*(WORLD_W-160),y=80+rand()*(WORLD_H-160);if(Math.hypot(x-WORLD_W/2,y-WORLD_H/2)<180)continue;let size=22+rand()*24;world.obstacles.push({x,y,size,type:l.obstacle});}
+ for(let i=0;i<280;i++)world.decor.push({x:rand()*WORLD_W,y:rand()*WORLD_H,s:2+rand()*4});
+}
+function updateHud(){
+ $('levelText').textContent='Уровень '+(levelIndex+1)+'/5 · '+levels[levelIndex].name;
+ $('hpText').textContent=Math.ceil(player.hp)+'/'+player.maxHp;$('hpFill').style.width=Math.max(0,player.hp/player.maxHp*100)+'%';
+ $('xpText').textContent=xp+'/'+xpNeed;$('xpFill').style.width=(xp/xpNeed*100)+'%';
+ $('charLevel').textContent=charLevel;$('weaponText').textContent=weapons.length?weapons.map(w=>weaponDefs[w.id].name).join(', '):'нет';
+}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function nearestEnemy(range=Infinity){let best=null,d=range;for(const e of enemies){if(e.hp<=0)continue;let n=dist(player,e);if(n<d){d=n;best=e;}}return best;}
+function collides(x,y,r){for(const o of world.obstacles){let dx=x-o.x,dy=y-o.y,rr=r+o.size*.45;if(Math.abs(dx)<rr+5&&Math.abs(dy)<rr+5&&Math.hypot(dx,dy)<rr+8)return true;}return false;}
+function spawnEnemy(isBoss=false){
+ const a=Math.random()*Math.PI*2,rad= Math.max(WORLD_W,WORLD_H)*.53;
+ let x=player.x+Math.cos(a)*rad,y=player.y+Math.sin(a)*rad;
+ x=Math.max(35,Math.min(WORLD_W-35,x));y=Math.max(35,Math.min(WORLD_H-35,y));
+ const n=levelIndex+1, bossHp=520+n*170;
+ const e={x,y,r:isBoss?38:13,hp:isBoss?bossHp:34+n*14,maxHp:isBoss?bossHp:34+n*14,speed:isBoss?34:40+n*7,damage:isBoss?18+n*3:7+n*2,boss:isBoss,hit:0,attackCd:0,color:isBoss?levels[levelIndex].bossColor:['#a8c66a','#c28b55','#8bd5e4','#8d9a68','#d97843'][levelIndex]};
+ enemies.push(e);if(isBoss){boss=e;$('bossName').textContent=levels[levelIndex].boss;$('bossHud').style.display='block';}
+}
+function gainXp(v){xp+=v;while(xp>=xpNeed){xp-=xpNeed;charLevel++;xpNeed=Math.floor(xpNeed*1.32+8);showUpgrade();return;}updateHud();}
+function showUpgrade(){
+ state='upgrade';const choices=$('choices');choices.innerHTML='';
+ let pool=upgrades.slice();for(let i=pool.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+ pool.slice(0,3).forEach(u=>{let b=document.createElement('button');b.className='choice';b.innerHTML='<strong>'+u.title+'</strong><span>'+u.text+'</span>';b.onclick=()=>{applyUpgrade(u);state='playing';showPanel('');updateHud();last=performance.now();requestAnimationFrame(loop);};choices.appendChild(b);});
+ showPanel('upgradePanel');
+}
+function applyUpgrade(u){if(weaponDefs[u.id])weapons.push({id:u.id,cool:0,angle:Math.random()*6.28});else if(u.id==='damage')damageBoost*=1.25;else if(u.id==='speed')speedBoost*=1.18;else if(u.id==='health'){maxHp+=25;player.maxHp=maxHp;player.hp=Math.min(player.maxHp,player.hp+25);}setToast('Получено: '+u.title);}
+function hurtPlayer(d){if(player.inv>0)return;player.hp-=d;player.inv=.65;if(player.hp<=0){player.hp=0;gameOver();}updateHud();}
+function gameOver(){state='dead';$('hud').style.display='none';$('bossHud').style.display='none';$('endTitle').textContent='Котость проиграла';$('endText').textContent='Уровень начинается заново. Опыт, оружие и улучшения этого прохождения потеряны.';$('nextBtn').style.display='none';$('againBtn').textContent='Повторить уровень';showPanel('endPanel');}
+function winLevel(){
+ state='won';$('hud').style.display='none';$('bossHud').style.display='none';
+ unlocked=Math.max(unlocked,Math.min(5,levelIndex+2));localStorage.setItem('kotosti_unlocked',unlocked);
+ $('endTitle').textContent=levelIndex===4?'Приключение завершено!':'Уровень пройден!';
+ $('endText').textContent=levelIndex===4?'Ты победил последнего босса и раскрыл тайну изменившегося мира. Кампания завершена!':'Босс побеждён. Впереди новая территория.';
+ $('nextBtn').style.display=levelIndex===4?'none':'inline-block';$('againBtn').textContent='Начать кампанию заново';showPanel('endPanel');updateProgressText();
+}
+function attackWeapons(dt){
+ for(const w of weapons){w.cool-=dt*1000;if(w.cool>0)continue;let def=weaponDefs[w.id],target=nearestEnemy(def.range);if(!target)continue;w.cool=def.rate/speedBoost;
+ if(def.type==='orbit'){target.hp-=def.damage*damageBoost;target.hit=.15;particles.push({x:target.x,y:target.y,life:.2,color:'#fff0a8'});}
+ else {let dx=target.x-player.x,dy=target.y-player.y,len=Math.hypot(dx,dy)||1;particles.push({x:player.x,y:player.y,vx:dx/len*330,vy:dy/len*330,life:1.3,damage:def.damage*damageBoost,color:w.id==='fire'?'#ff8747':w.id==='magic'?'#d4a2ff':w.id==='bow'?'#ffe2a3':'#8fe2d4',projectile:true,weapon:w.id});}
+ }
+}
+function update(dt){
+ if(state!=='playing')return;
+ let dx=(keys.d||keys.ArrowRight?1:0)-(keys.a||keys.ArrowLeft?1:0),dy=(keys.s||keys.ArrowDown?1:0)-(keys.w||keys.ArrowUp?1:0);
+ let len=Math.hypot(dx,dy);if(len){dx/=len;dy/=len;let nx=player.x+dx*190*speedBoost*dt,ny=player.y+dy*190*speedBoost*dt;if(!collides(nx,player.y,player.r))player.x=nx;if(!collides(player.x,ny,player.r))player.y=ny;}
+ player.x=Math.max(20,Math.min(WORLD_W-20,player.x));player.y=Math.max(20,Math.min(WORLD_H-20,player.y));player.inv=Math.max(0,player.inv-dt);
+ spawnTimer-=dt;if(spawnTimer<=0&&!bossSpawned){spawnEnemy(false);spawnTimer=Math.max(.75,2.2-(levelIndex*.22));}
+ if(!bossSpawned&&levelKills>=16){bossSpawned=true;spawnEnemy(true);setToast('Появился босс: '+levels[levelIndex].boss);}
+ for(const e of enemies){if(e.hp<=0)continue;let d=dist(e,player),dxp=player.x-e.x,dyp=player.y-e.y;if(d>e.r+player.r+3){e.x+=dxp/d*e.speed*dt;e.y+=dyp/d*e.speed*dt;}else{e.attackCd-=dt;if(e.attackCd<=0){hurtPlayer(e.damage);e.attackCd=e.boss?1.0:1.25;}}e.hit=Math.max(0,e.hit-dt);}
+ attackWeapons(dt);
+ for(const p of particles){p.life-=dt;if(p.projectile){p.x+=p.vx*dt;p.y+=p.vy*dt;let hit=enemies.find(e=>e.hp>0&&Math.hypot(e.x-p.x,e.y-p.y)<e.r+8);if(hit){hit.hp-=p.damage;hit.hit=.15;p.life=0;if(p.weapon==='fire'){for(const e of enemies)if(e.hp>0&&dist(e,hit)<55)e.hp-=p.damage*.45;}}}}
+ particles=particles.filter(p=>p.life>0);
+ for(let i=enemies.length-1;i>=0;i--){let e=enemies[i];if(e.hp<=0){if(e.boss){winLevel();return;}levelKills++;gainXp(7+levelIndex*3);particles.push({x:e.x,y:e.y,life:.35,color:'#ffe28a'});enemies.splice(i,1);}}
+ camera.x=Math.max(0,Math.min(WORLD_W-W,(player.x-W/2)));camera.y=Math.max(0,Math.min(WORLD_H-H,(player.y-H/2)));
+ if(boss){$('bossFill').style.width=Math.max(0,boss.hp/boss.maxHp*100)+'%';}
+ if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').style.display='none';}
+ updateHud();
+}
+function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+function drawCat(x,y,scale=1,body='#f2eee4',outline='#302936'){
+ ctx.save();ctx.translate(Math.round(x),Math.round(y));ctx.scale(scale,scale);
+ // tail
+ rect(-13,1,7,5,outline);rect(-17,-2,7,6,body);
+ // ears and head
+ rect(-10,-12,8,8,outline);rect(3,-12,8,8,outline);rect(-8,-10,16,16,outline);
+ rect(-6,-8,12,12,body);
+ // calico patches
+ rect(-6,-7,5,5,'#29252e');rect(2,-4,5,5,'#d97a39');rect(-5,2,5,3,'#d97a39');
+ // eyes
+ rect(-3,-2,2,2,'#211d27');rect(4,-2,2,2,'#211d27');rect(1,2,2,2,'#a86d78');
+ // body
+ rect(-9,6,18,12,outline);rect(-7,7,14,9,body);rect(-7,7,6,5,'#d97a39');rect(2,11,5,5,'#29252e');
+ rect(-7,16,5,5,outline);rect(3,16,5,5,outline);
+ ctx.restore();
+}
+function drawEnemy(e){
+ ctx.save();ctx.translate(Math.round(e.x-camera.x),Math.round(e.y-camera.y));
+ let c=e.color;if(e.hit>0)c='#fff';
+ rect(-e.r*.8,-e.r*.7,e.r*1.6,e.r*1.4,c);rect(-e.r*.55,-e.r,e.r*1.1,e.r*.55,c);
+ rect(-e.r*.45,-e.r*.1,4,4,'#201b24');rect(e.r*.2,-e.r*.1,4,4,'#201b24');
+ if(e.boss){rect(-e.r,-e.r-9,e.r*2,5,'#2b202b');rect(-e.r+2,-e.r-7,e.r*2-4,2,'#f1c56e');}
+ ctx.restore();
+}
+function drawObstacle(o){
+ let x=Math.round(o.x-camera.x),y=Math.round(o.y-camera.y),s=o.size;
+ if(x<-60||y<-60||x>W+60||y>H+60)return;
+ if(o.type==='tree'){rect(x-s*.25,y-s*.1,s*.5,s*.9,'#69452e');rect(x-s*.7,y-s*.8,s*1.4,s*.9,'#254c32');rect(x-s*.45,y-s*1.1,s*.9,s*.8,'#376b3d');}
+ else if(o.type==='rock'||o.type==='ice'||o.type==='lavaRock'){rect(x-s*.55,y-s*.35,s*1.1,s*.75,o.type==='ice'?'#d3f1f3':o.type==='lavaRock'?'#572d2b':'#796c60');rect(x-s*.3,y-s*.55,s*.6,s*.3,o.type==='ice'?'#a9dce5':o.type==='lavaRock'?'#d65d37':'#a09483');}
+ else{rect(x-s*.5,y-s*.25,s,s*.6,'#493d36');rect(x-s*.25,y-s*.6,s*.5,s*.4,'#65744e');}
+}
+function draw(){
+ if(!world||!player){
+   rect(0,0,W,H,'#294b35');
+   for(let i=0;i<28;i++){let x=(i*137)%W,y=(i*83)%H;rect(x,y,18,28,'#24442f');rect(x-7,y-12,32,22,'#376b3d');}
+   drawCat(W/2,H/2,2);
+   return;
+ }
+ const l=levels[levelIndex]||levels[0];rect(0,0,W,H,l.ground);
+ // ground pattern
+ for(let y=0;y<H;y+=32)for(let x=0;x<W;x+=32){let wx=x+camera.x,wy=y+camera.y;let v=(Math.floor(wx/32)*7+Math.floor(wy/32)*13+levelIndex*11)%9;if(v===0)rect(x+8,y+10,3,3,l.dark);if(v===3)rect(x+23,y+24,2,2,'#ffffff20');}
+ for(const d of world.decor){let x=d.x-camera.x,y=d.y-camera.y;if(x>0&&x<W&&y>0&&y<H)rect(x,y,d.s,d.s,l.dark);}
+ for(const o of world.obstacles)drawObstacle(o);
+ for(const e of enemies)if(e.hp>0)drawEnemy(e);
+ for(const p of particles){let x=p.x-camera.x,y=p.y-camera.y;if(p.projectile)rect(x-4,y-4,8,8,p.color);else rect(x-3,y-3,6,6,p.color);}
+ drawCat(player.x-camera.x,player.y-camera.y,1,player.inv>0?'#ffffff':'#eee9df');
+ // player health mini bar
+ rect(player.x-camera.x-18,player.y-camera.y-29,36,5,'#302733');rect(player.x-camera.x-17,player.y-camera.y-28,34*Math.max(0,player.hp/player.maxHp),3,'#71d276');
+ if(boss&&boss.hp>0){let bx=boss.x-camera.x,by=boss.y-camera.y;ctx.fillStyle='#fff';ctx.font='12px Arial';ctx.textAlign='center';ctx.fillText(levels[levelIndex].boss,bx,by-boss.r-17);}
+}
+function loop(now){if(state!=='playing')return;let dt=Math.min(.033,(now-last)/1000||0);last=now;update(dt);if(state==='playing'){draw();requestAnimationFrame(loop);}}
+window.addEventListener('keydown',e=>{let k=e.key.toLowerCase();keys[k]=true;if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();if(k==='p'&&state==='playing'){state='paused';showPanel('pausePanel');}});
+window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+$('continueBtn').onclick=()=>showLevelSelect(Math.min(unlocked-1,4));
+$('resetProgressBtn').onclick=()=>{unlocked=1;localStorage.setItem('kotosti_unlocked','1');updateProgressText();setToast('Открытие уровней сброшено');};
+$('startLevelBtn').onclick=()=>beginLevel(levelIndex);
+$('backMenuBtn').onclick=()=>{state='menu';$('hud').style.display='none';showPanel('menu');updateProgressText();};
+$('resumeBtn').onclick=()=>{state='playing';showPanel('');last=performance.now();requestAnimationFrame(loop);};
+$('pauseMenuBtn').onclick=()=>{state='menu';$('hud').style.display='none';$('bossHud').style.display='none';showPanel('menu');updateProgressText();};
+$('nextBtn').onclick=()=>showLevelSelect(levelIndex+1);
+$('againBtn').onclick=()=>beginLevel(levelIndex===4||state==='won'?0:levelIndex);
+$('endMenuBtn').onclick=()=>{state='menu';showPanel('menu');updateProgressText();};
+updateProgressText();draw();
+})();
+</script>
+</body>
+</html>
