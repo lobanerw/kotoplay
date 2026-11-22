@@ -1,0 +1,570 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>КотоДуэль — КотоPlay</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #17100c;
+    color: #fff1df;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    padding: 16px 24px;
+    background: #29170e;
+    border-bottom: 2px solid #a94e19;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.logo {
+    color: #ff9a43;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+header a {
+    color: #ffc18c;
+    text-decoration: none;
+}
+
+main {
+    max-width: 1100px;
+    margin: 25px auto;
+    padding: 15px;
+}
+
+h1 { color: #ff9a43; }
+
+.stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+.stat {
+    background: #342016;
+    border: 1px solid #75401e;
+    padding: 12px 18px;
+    border-radius: 12px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.stat strong {
+    display: block;
+    color: #ffb15f;
+    font-size: 22px;
+    margin-top: 5px;
+}
+
+.arena {
+    position: relative;
+    height: 300px;
+    background: linear-gradient(#50331f 0%, #78502e 65%, #49301d 66%);
+    border: 3px solid #a85a28;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.ground {
+    position: absolute;
+    bottom: 0;
+    height: 35%;
+    width: 100%;
+    background: #49301d;
+    border-top: 4px solid #b17a42;
+}
+
+.tower {
+    position: absolute;
+    bottom: 35%;
+    width: 85px;
+    height: 135px;
+    border: 5px solid #38251b;
+    border-radius: 9px 9px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 35px;
+    z-index: 2;
+}
+
+.player-tower {
+    left: 25px;
+    background: #bd692c;
+}
+
+.enemy-tower {
+    right: 25px;
+    background: #87413b;
+}
+
+.health {
+    position: absolute;
+    top: -23px;
+    left: -5px;
+    width: 85px;
+    height: 12px;
+    background: #481e1e;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.health-fill {
+    height: 100%;
+    background: #61d66c;
+    width: 100%;
+}
+
+.gold-pile {
+    position: absolute;
+    bottom: 36%;
+    left: 120px;
+    font-size: 30px;
+}
+
+.enemy-gold {
+    position: absolute;
+    bottom: 36%;
+    right: 120px;
+    font-size: 30px;
+}
+
+.unit {
+    position: absolute;
+    bottom: 36%;
+    font-size: 27px;
+    z-index: 3;
+    transition: left .15s linear;
+}
+
+.controls, .upgrades {
+    background: #291a12;
+    border: 1px solid #75401e;
+    border-radius: 14px;
+    padding: 18px;
+    margin-top: 18px;
+}
+
+h2 {
+    color: #ffad61;
+    margin-top: 0;
+}
+
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+button {
+    background: #a94e19;
+    color: white;
+    border: none;
+    border-radius: 9px;
+    padding: 12px 16px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+button:hover { background: #cf6828; }
+button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.message {
+    margin-top: 15px;
+    color: #ffc18c;
+    min-height: 24px;
+}
+
+.mode {
+    display: inline-block;
+    padding: 7px 12px;
+    border-radius: 8px;
+    background: #56331e;
+    margin-bottom: 12px;
+}
+
+footer {
+    text-align: center;
+    padding: 25px;
+    color: #9b7961;
+}
+</style>
+</head>
+<body>
+
+<header>
+    <div class="logo">🐱 КотоPlay</div>
+    <a href="index.html">← На главную</a>
+</header>
+
+<main>
+    <h1>⚔️ КотоДуэль</h1>
+    <p>Уничтожь вражескую башню и одержи победу!</p>
+
+    <div class="stats">
+        <div class="stat">
+            Золото
+            <strong id="gold">100</strong>
+        </div>
+        <div class="stat">
+            Уровень
+            <strong id="level">1</strong>
+        </div>
+        <div class="stat">
+            Шахтёры
+            <strong id="miners">0</strong>
+        </div>
+        <div class="stat">
+            Армия
+            <strong id="army">0</strong>
+        </div>
+    </div>
+
+    <div class="arena" id="arena">
+        <div class="ground"></div>
+
+        <div class="tower player-tower">
+            🏰
+            <div class="health">
+                <div class="health-fill" id="playerHealth"></div>
+            </div>
+        </div>
+
+        <div class="tower enemy-tower">
+            🏰
+            <div class="health">
+                <div class="health-fill" id="enemyHealth"></div>
+            </div>
+        </div>
+
+        <div class="gold-pile">🪙</div>
+        <div class="enemy-gold">🪙</div>
+    </div>
+
+    <div class="controls">
+        <h2>Покупка</h2>
+        <div class="buttons">
+            <button onclick="buyMiner()">⛏️ Шахтёр — 30 золота</button>
+            <button onclick="buyUnit()">🐱 Боец — 50 золота</button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <h2>Управление армией</h2>
+        <div class="mode">
+            Режим: <strong id="mode">Защита</strong>
+        </div>
+        <div class="buttons">
+            <button onclick="setMode('defense')">🛡️ Защита</button>
+            <button onclick="setMode('attack')">⚔️ Атака</button>
+        </div>
+    </div>
+
+    <div class="upgrades">
+        <h2>Улучшения</h2>
+        <div class="buttons">
+            <button onclick="upgradeIncome()">
+                💰 Доход +1 — 100 золота
+            </button>
+            <button onclick="upgradeDamage()">
+                🏰 Урон башни +5 — 120 золота
+            </button>
+        </div>
+        <p>Доход в секунду: <strong id="income">1</strong></p>
+        <p>Урон башни: <strong id="damage">5</strong></p>
+    </div>
+
+    <div class="message" id="message">
+        Построй свою армию и приготовься к битве!
+    </div>
+</main>
+
+<footer>КотоДуэль · Игра КотоPlay</footer>
+
+<script>
+let gold = 100;
+let level = 1;
+
+let miners = 0;
+let army = [];
+
+let income = 1;
+let towerDamage = 5;
+
+let playerHP = 100;
+let enemyHP = 100;
+
+let mode = "defense";
+let enemyUnits = [];
+
+let gameOver = false;
+let enemyTimer = 0;
+
+const arena = document.getElementById("arena");
+
+function update() {
+    document.getElementById("gold").textContent = Math.floor(gold);
+    document.getElementById("level").textContent = level;
+    document.getElementById("miners").textContent = miners;
+    document.getElementById("army").textContent = army.length;
+    document.getElementById("income").textContent = income;
+    document.getElementById("damage").textContent = towerDamage;
+
+    document.getElementById("mode").textContent =
+        mode === "attack" ? "Атака" : "Защита";
+
+    document.getElementById("playerHealth").style.width =
+        Math.max(0, playerHP) + "%";
+
+    document.getElementById("enemyHealth").style.width =
+        Math.max(0, enemyHP) + "%";
+}
+
+function message(text) {
+    document.getElementById("message").textContent = text;
+}
+
+function buyMiner() {
+    if (gameOver) return;
+
+    if (gold < 30) {
+        message("Недостаточно золота!");
+        return;
+    }
+
+    gold -= 30;
+    miners++;
+    message("Новый шахтёр отправился добывать золото!");
+    update();
+}
+
+function buyUnit() {
+    if (gameOver) return;
+
+    if (gold < 50) {
+        message("Недостаточно золота!");
+        return;
+    }
+
+    gold -= 50;
+
+    army.push({
+        x: 115,
+        hp: 30,
+        damage: 5,
+        element: null
+    });
+
+    message("Новый боец присоединился к твоей армии!");
+    drawUnits();
+    update();
+}
+
+function setMode(newMode) {
+    if (gameOver) return;
+
+    mode = newMode;
+
+    message(
+        mode === "attack"
+        ? "Армия отправляется атаковать!"
+        : "Армия возвращается защищать башню!"
+    );
+
+    update();
+    drawUnits();
+}
+
+function upgradeIncome() {
+    if (gameOver) return;
+
+    if (gold < 100) {
+        message("Недостаточно золота!");
+        return;
+    }
+
+    gold -= 100;
+    income++;
+    message("Доход увеличен!");
+    update();
+}
+
+function upgradeDamage() {
+    if (gameOver) return;
+
+    if (gold < 120) {
+        message("Недостаточно золота!");
+        return;
+    }
+
+    gold -= 120;
+    towerDamage += 5;
+    message("Урон башни увеличен!");
+    update();
+}
+
+function drawUnits() {
+    document.querySelectorAll(".unit").forEach(el => el.remove());
+
+    army.forEach((unit, index) => {
+        const el = document.createElement("div");
+        el.className = "unit";
+        el.textContent = "🐱";
+
+        const position = mode === "attack"
+            ? Math.min(700, 120 + index * 25)
+            : 115 + index * 20;
+
+        el.style.left = position + "px";
+        el.dataset.index = index;
+
+        arena.appendChild(el);
+        unit.element = el;
+    });
+
+    enemyUnits.forEach((unit, index) => {
+        const el = document.createElement("div");
+        el.className = "unit";
+        el.textContent = "🐈‍⬛";
+        el.style.left = unit.x + "px";
+        el.style.bottom = "36%";
+        arena.appendChild(el);
+        unit.element = el;
+    });
+}
+
+function spawnEnemy() {
+    if (gameOver) return;
+
+    enemyUnits.push({
+        x: 700,
+        hp: 30,
+        damage: 5,
+        element: null
+    });
+
+    drawUnits();
+}
+
+function finishGame(won) {
+    gameOver = true;
+
+    if (won) {
+        message("🏆 Победа! Вражеская башня разрушена!");
+        gold += 100;
+        setTimeout(() => {
+            if (confirm("Перейти на следующий уровень?")) {
+                nextLevel();
+            }
+        }, 300);
+    } else {
+        message("Вражеская армия разрушила твою башню!");
+    }
+
+    update();
+}
+
+function nextLevel() {
+    level++;
+    playerHP = 100;
+    enemyHP = 100 + (level - 1) * 25;
+    enemyUnits = [];
+    army = [];
+    gameOver = false;
+    mode = "defense";
+    enemyTimer = 0;
+
+    message("Начался уровень " + level + "! Удачи!");
+    drawUnits();
+    update();
+}
+
+let lastTime = Date.now();
+
+function gameLoop() {
+    const now = Date.now();
+    const delta = Math.min((now - lastTime) / 1000, 0.1);
+    lastTime = now;
+
+    if (!gameOver) {
+        gold += (income + miners * 2) * delta;
+
+        enemyTimer += delta;
+
+        if (enemyTimer >= Math.max(3, 8 - level * 0.3)) {
+            enemyTimer = 0;
+            spawnEnemy();
+        }
+
+        army.forEach(unit => {
+            if (mode === "attack") {
+                if (enemyUnits.length > 0) {
+                    const enemy = enemyUnits[0];
+                    enemy.hp -= unit.damage * delta;
+
+                    if (enemy.hp <= 0) {
+                        enemyUnits.shift();
+                        gold += 10;
+                    }
+                } else {
+                    enemyHP -= unit.damage * delta;
+                }
+            } else {
+                if (enemyUnits.length > 0) {
+                    const enemy = enemyUnits[0];
+                    enemy.hp -= unit.damage * delta;
+
+                    if (enemy.hp <= 0) {
+                        enemyUnits.shift();
+                        gold += 10;
+                    }
+                }
+            }
+        });
+
+        enemyUnits.forEach(enemy => {
+            enemy.x -= 15 * delta;
+
+            if (enemy.x <= 110) {
+                playerHP -= enemy.damage * delta;
+            }
+        });
+
+        if (Math.floor(now / 1000) !== Math.floor((now - delta * 1000) / 1000)) {
+            if (enemyUnits.length === 0) {
+                enemyHP -= towerDamage;
+            }
+        }
+
+        if (enemyHP <= 0) finishGame(true);
+        if (playerHP <= 0) finishGame(false);
+
+        update();
+
+        if (Math.random() < 0.2) drawUnits();
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+update();
+gameLoop();
+</script>
+
+</body>
+</html>
