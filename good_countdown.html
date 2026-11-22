@@ -28,21 +28,15 @@ footer{font-size:12px;color:#987e69;margin-top:18px}
 
   <section id="setup" class="screen active">
     <div class="card">
-      <label>Твоё имя</label><input id="nick" maxlength="18" placeholder="Например, Котост">
-      <label>Код комнаты для подключения</label><input id="roomCode" maxlength="8" placeholder="Например, CAT123">
-      <div class="row">
-        <button id="createBtn">Создать онлайн-комнату</button>
-        <button class="secondary" id="joinBtn">Подключиться</button>
-      </div>
-      <p class="hint">Для онлайн-игры оба игрока должны открыть эту страницу. Создатель отправляет другу код комнаты.</p>
+      <p>«Хороший отсчёт» использует общие комнаты КотоPlay.</p>
+      <p class="hint">Создай комнату или войди в комнату «Хороший отсчёт» через общее лобби. Отдельный поиск соперника и ввод имени здесь не нужны.</p>
+      <div class="status" id="setupStatus">Подключаемся к комнате…</div>
     </div>
-    <div class="status" id="setupStatus"></div>
   </section>
 
   <section id="waiting" class="screen">
     <div class="card">
-      <p>Код комнаты</p><div class="big" style="font-size:52px" id="codeView">——</div>
-      <p id="waitingText">Ждём второго игрока…</p>
+      <p id="waitingText">Ищем соперника…</p>
       <button class="secondary" id="backBtn">Назад</button>
     </div>
   </section>
@@ -72,64 +66,87 @@ footer{font-size:12px;color:#987e69;margin-top:18px}
       <button class="secondary" id="exitBtn">В меню</button>
     </div>
   </section>
-  <footer>Прототип онлайн-игры. Для подключения Supabase укажи URL проекта и publishable key в настройках файла.</footer>
+  <footer>Онлайн-игра KotoPlay.</footer>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://wrziasmcufzmwjlnlnbs.supabase.co";
 const SUPABASE_KEY = "sb_publishable_vflNoh6aWpx0o90JzlDBLg_gxijRwS5";
-const sb = window.supabase && SUPABASE_KEY.startsWith("sb_publishable_") ? window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY) : null;
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY) : null;
 const $=id=>document.getElementById(id);
-let room=null, channel=null, myId=crypto.randomUUID(), myName="", myIndex=0, gameState={}, poll=null, raf=null, localStart=0, pressed=false, scheduledRound=null;
+const params=new URLSearchParams(location.search);
+let roomId=params.get('roomId');
+let myIndex=Number(params.get('playerIndex')||0);
+let room=null, channel=null, gameState={}, poll=null, raf=null, pressed=false, scheduledRound=null, lastStartedRound=0;
 const show=id=>{document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')};
-const code=()=>Math.random().toString(36).slice(2,8).toUpperCase();
 function setStatus(id,msg){$(id).textContent=msg}
-function ready(){if(!sb){setStatus('setupStatus','Сначала вставь свой publishable key Supabase в файл.');return false}return true}
-async function createRoom(){
- if(!ready())return;myName=$('nick').value.trim()||'Игрок';room=code();myIndex=0;
- gameState={phase:'waiting',players:[{id:myId,name:myName,score:0,pressedAt:null}],round:1,targetMs:6000,startAt:null,results:null};
- const {error}=await sb.from('game_rooms').insert({id:crypto.randomUUID(),nickname:myName,player_color:'orange',game:'good_countdown',status:'waiting',players:gameState.players,game_state:{...gameState,room_code:room}});
- if(error){setStatus('setupStatus','Не удалось создать комнату: '+error.message);return}
- await findRoom();openWaiting();
+function normalizePlayers(row){
+ const statePlayers=Array.isArray(row.game_state?.players)?row.game_state.players:null;
+ const lobbyPlayers=Array.isArray(row.players)?row.players:[];
+ const source=statePlayers&&statePlayers.length?statePlayers:lobbyPlayers;
+ return source.map((p,i)=>({
+  id:p.id||('player-'+i),
+  name:p.name||p.nickname||('Игрок '+(i+1)),
+  score:Number(p.score||0),
+  pressedAt:p.pressedAt??null,
+  color:p.color||'#ff963f'
+ }));
 }
-async function joinRoom(){
- if(!ready())return;myName=$('nick').value.trim()||'Игрок';room=$('roomCode').value.trim().toUpperCase();
- if(!room){setStatus('setupStatus','Введи код комнаты.');return}
- const {data,error}=await sb.from('game_rooms').select('*').eq('game','good_countdown').eq('status','waiting').order('created_at',{ascending:false}).limit(30);
- if(error){setStatus('setupStatus',error.message);return}
- const found=(data||[]).find(x=>x.game_state?.room_code===room);
- if(!found){setStatus('setupStatus','Комната не найдена или игра уже началась.');return}
- const players=found.game_state.players||[];
- if(players.length>=2){setStatus('setupStatus','В комнате уже два игрока.');return}
- players.push({id:myId,name:myName,score:0,pressedAt:null});
- const next={...found.game_state,players};
- const up=await sb.from('game_rooms').update({players,game_state:next,status:'playing'}).eq('id',found.id);
- if(up.error){setStatus('setupStatus',up.error.message);return}
- roomId=found.id;gameState=next;myIndex=1;openWaiting();await subscribeRoom();
+function ready(){
+ if(!sb){setStatus('setupStatus','Не удалось загрузить Supabase. Проверь подключение к интернету.');return false}
+ if(!roomId){setStatus('setupStatus','Сначала создай комнату или войди в комнату «Хороший отсчёт» через общее лобби КотоPlay.');return false}
+ if(myIndex!==0&&myIndex!==1){setStatus('setupStatus','Не удалось определить место игрока в комнате.');return false}
+ return true;
 }
-let roomId=null;
-async function findRoom(){
- const {data,error}=await sb.from('game_rooms').select('*').eq('game','good_countdown').eq('status','waiting').order('created_at',{ascending:false}).limit(30);
- if(error)throw error;
- const found=(data||[]).find(x=>x.game_state?.room_code===room);
- if(!found)throw new Error('Комната не найдена');
- roomId=found.id;gameState=found.game_state;
+async function loadRoom(){
+ if(!ready())return;
+ const {data,error}=await sb.from('game_rooms').select('*').eq('id',roomId).maybeSingle();
+ if(error||!data){setStatus('setupStatus','Не удалось открыть комнату: '+(error?.message||'комната не найдена'));return}
+ room=data;
+ gameState=data.game_state||{};
+ const players=normalizePlayers(data);
+ if(!gameState.players||!gameState.players.length){
+  gameState={phase:players.length>=2?'waiting':'waiting',players,round:1,targetMs:6000,startAt:null,results:null};
+ }
+ else gameState.players=normalizePlayers(data);
+ if(players.length<2){show('waiting');$('waitingText').textContent='Комната открыта. Ждём второго игрока…';}
+ else renderState();
+ await subscribeRoom();
+ startPolling();
 }
-function openWaiting(){$('codeView').textContent=room;show('waiting');$('waitingText').textContent=myIndex===0?'Отправь код другу и дождись подключения.':'Подключение выполнено.';subscribeRoom();startPolling()}
+function openWaiting(){show('waiting');$('waitingText').textContent='Комната открыта. Ждём второго игрока…';}
 async function subscribeRoom(){
  if(!sb||!roomId)return;
  if(channel)await sb.removeChannel(channel);
- channel=sb.channel('room-'+roomId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'game_rooms',filter:'id=eq.'+roomId},payload=>{gameState=payload.new.game_state||gameState;renderState()}).subscribe();
+ channel=sb.channel('room-'+roomId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'game_rooms',filter:'id=eq.'+roomId},payload=>{
+  room=payload.new;
+  gameState=payload.new.game_state||gameState;
+  gameState.players=normalizePlayers(payload.new);
+  renderState();
+ }).subscribe();
 }
-function startPolling(){if(poll)clearInterval(poll);poll=setInterval(async()=>{if(!roomId||!sb)return;const {data}=await sb.from('game_rooms').select('game_state,status').eq('id',roomId).maybeSingle();if(data){gameState=data.game_state||gameState;renderState()}},900)}
-async function saveState(patch){gameState={...gameState,...patch};const {error}=await sb.from('game_rooms').update({game_state:gameState,players:gameState.players,status:gameState.phase==='finished'?'finished':'playing'}).eq('id',roomId);if(error)setStatus('gameStatus','Ошибка синхронизации: '+error.message)}
+function startPolling(){
+ if(poll)clearInterval(poll);
+ poll=setInterval(async()=>{
+  if(!roomId||!sb)return;
+  const {data,error}=await sb.from('game_rooms').select('*').eq('id',roomId).maybeSingle();
+  if(!error&&data){room=data;gameState=data.game_state||gameState;gameState.players=normalizePlayers(data);renderState();}
+ },700);
+}
+async function saveState(patch){
+ gameState={...gameState,...patch};
+ const {data,error}=await sb.from('game_rooms').update({game_state:gameState,players:gameState.players,status:gameState.phase==='finished'?'finished':'playing'}).eq('id',roomId).select().maybeSingle();
+ if(error)setStatus('gameStatus','Ошибка синхронизации: '+error.message);
+ else if(data)room=data;
+}
 function renderState(){
- if(!gameState.players||gameState.players.length<2){show('waiting');return}
+ if(!gameState.players||gameState.players.length<2){show('waiting');$('waitingText').textContent='Комната открыта. Ждём второго игрока…';return}
  $('p1name').textContent=gameState.players[0].name;$('p2name').textContent=gameState.players[1].name;
  $('p1score').textContent=gameState.players[0].score;$('p2score').textContent=gameState.players[1].score;
  if(gameState.phase==='finished'){show('finished');const w=gameState.winner;$('winnerText').textContent='Победил '+gameState.players[w].name+'!';$('finishText').textContent='Счёт: '+gameState.players[0].score+' : '+gameState.players[1].score;return}
  if(gameState.phase==='playing'){show('game');$('roundStatus').textContent='Раунд '+gameState.round+'. Отсчёт до нуля!';if(gameState.players[myIndex].pressedAt!==null){$('pressBtn').disabled=true;$('myStatus').textContent='Ты уже нажал. Ждём соперника…'}else if(Date.now()<(gameState.startAt||0)){$('pressBtn').disabled=true;$('myStatus').textContent='Приготовься… отсчёт скоро начнётся.'}else{$('pressBtn').disabled=false;$('myStatus').textContent='Нажми кнопку как можно ближе к нулю!'}animateTimer()}
  else if(gameState.phase==='result'){show('game');$('pressBtn').disabled=true;const r=gameState.results;$('roundStatus').textContent=r&&r.winner>=0?'Раунд выиграл: '+gameState.players[r.winner].name:'Ничья в раунде';$('myStatus').textContent='Результат: '+(r?Math.round(r.diff[0])+' мс против '+Math.round(r.diff[1])+' мс':'');$('gameStatus').textContent='Следующий раунд начнётся через несколько секунд.';if(myIndex===0&&scheduledRound!==gameState.round){scheduledRound=gameState.round;setTimeout(()=>{if(gameState.phase==='result'&&gameState.players.every(p=>p.score<3)){pressed=false;beginNextRound()}},2500)}}
+ else if(gameState.phase==='waiting'&&myIndex===0&&gameState.players.length===2&&lastStartedRound!==gameState.round){lastStartedRound=gameState.round;beginRound();}
 }
 function animateTimer(){if(raf)cancelAnimationFrame(raf);const tick=()=>{if(!gameState.startAt||gameState.phase!=='playing')return;let elapsed=Math.max(0,Date.now()-gameState.startAt);let remain=Math.max(0,gameState.targetMs-elapsed);$('timer').textContent=(remain/1000).toFixed(2);$('meterFill').style.width=(Math.min(100,elapsed/gameState.targetMs*100))+'%';if(remain>0)raf=requestAnimationFrame(tick);else $('timer').textContent='0.00'};tick()}
 async function beginRound(){
@@ -150,11 +167,16 @@ $('pressBtn').onclick=async()=>{
  }
 };
 async function beginNextRound(){gameState.round++;await beginRound()}
-$('createBtn').onclick=createRoom;$('joinBtn').onclick=joinRoom;
-$('backBtn').onclick=()=>{if(poll)clearInterval(poll);show('setup')};
-$('rematchBtn').onclick=async()=>{if(myIndex!==0)return;const players=gameState.players.map(p=>({...p,score:0,pressedAt:null}));await saveState({phase:'playing',players,round:1,startAt:Date.now()+3000,results:null,winner:null});pressed=false;show('game');renderState()};
-$('exitBtn').onclick=()=>{if(poll)clearInterval(poll);show('setup')};
-setInterval(()=>{if(gameState.phase==='waiting'&&gameState.players?.length===2&&myIndex===0)beginRound()},1000);
+$('backBtn').onclick=()=>{if(poll)clearInterval(poll);setStatus('setupStatus','Вернись в общее лобби КотоPlay, чтобы выбрать другую комнату.');show('setup')};
+$('rematchBtn').onclick=async()=>{
+ if(myIndex!==0)return;
+ const players=gameState.players.map(p=>({...p,score:0,pressedAt:null}));
+ pressed=false;scheduledRound=null;lastStartedRound=0;
+ await saveState({phase:'waiting',players,round:1,targetMs:6000,startAt:null,results:null,winner:null});
+ renderState();
+};
+$('exitBtn').onclick=()=>{if(poll)clearInterval(poll);show('setup');setStatus('setupStatus','Вернись в общее лобби КотоPlay, чтобы выбрать другую комнату.');};
+loadRoom();
 </script>
 </body>
 </html>
