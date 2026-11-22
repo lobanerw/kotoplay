@@ -6,202 +6,227 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>КотоДуэль — КотоPlay</title>
 <style>
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
 
 body {
     margin: 0;
+    min-height: 100vh;
     background: #17100c;
-    color: #fff1df;
+    color: #fff0df;
     font-family: Arial, sans-serif;
 }
 
 header {
-    padding: 16px 24px;
     background: #29170e;
-    border-bottom: 2px solid #a94e19;
+    border-bottom: 2px solid #a95320;
+    padding: 15px 25px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
 }
 
 .logo {
-    color: #ff9a43;
-    font-size: 25px;
+    font-size: 24px;
     font-weight: bold;
+    color: #ff9c4a;
 }
 
 header a {
-    color: #ffc18c;
+    color: #ffd0a6;
     text-decoration: none;
 }
 
 main {
-    max-width: 1100px;
-    margin: 25px auto;
-    padding: 15px;
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
 }
 
-h1 { color: #ff9a43; }
+h1 {
+    color: #ff9c4a;
+    margin-bottom: 5px;
+}
 
-.stats {
-    display: flex;
+.subtitle {
+    color: #c6a48b;
+    margin-top: 0;
+}
+
+.topbar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
-    flex-wrap: wrap;
-    margin: 20px 0;
+    margin: 22px 0;
 }
 
 .stat {
-    background: #342016;
-    border: 1px solid #75401e;
-    padding: 12px 18px;
+    background: #302016;
+    border: 1px solid #71401f;
     border-radius: 12px;
-    flex: 1;
-    min-width: 120px;
+    padding: 13px;
+}
+
+.stat span {
+    color: #c6a48b;
+    font-size: 13px;
 }
 
 .stat strong {
     display: block;
-    color: #ffb15f;
-    font-size: 22px;
+    font-size: 23px;
+    color: #ffb35f;
     margin-top: 5px;
 }
 
-.arena {
+.game-frame {
+    background: #21160f;
+    border: 2px solid #a95320;
+    border-radius: 17px;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.canvas-wrap {
     position: relative;
-    height: 300px;
-    background: linear-gradient(#50331f 0%, #78502e 65%, #49301d 66%);
-    border: 3px solid #a85a28;
-    border-radius: 15px;
-    overflow: hidden;
-}
-
-.ground {
-    position: absolute;
-    bottom: 0;
-    height: 35%;
     width: 100%;
-    background: #49301d;
-    border-top: 4px solid #b17a42;
 }
 
-.tower {
-    position: absolute;
-    bottom: 35%;
-    width: 85px;
-    height: 135px;
-    border: 5px solid #38251b;
-    border-radius: 9px 9px 0 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 35px;
-    z-index: 2;
-}
-
-.player-tower {
-    left: 25px;
-    background: #bd692c;
-}
-
-.enemy-tower {
-    right: 25px;
-    background: #87413b;
-}
-
-.health {
-    position: absolute;
-    top: -23px;
-    left: -5px;
-    width: 85px;
-    height: 12px;
-    background: #481e1e;
+canvas {
+    width: 100%;
+    display: block;
     border-radius: 10px;
-    overflow: hidden;
+    background: #8bc7dc;
 }
 
-.health-fill {
-    height: 100%;
-    background: #61d66c;
-    width: 100%;
-}
-
-.gold-pile {
+.wave-label {
     position: absolute;
-    bottom: 36%;
-    left: 120px;
-    font-size: 30px;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2c1a10dd;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    pointer-events: none;
 }
 
-.enemy-gold {
-    position: absolute;
-    bottom: 36%;
-    right: 120px;
-    font-size: 30px;
+.panels {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 15px;
+    margin-top: 17px;
 }
 
-.unit {
-    position: absolute;
-    bottom: 36%;
-    font-size: 27px;
-    z-index: 3;
-    transition: left .15s linear;
-}
-
-.controls, .upgrades {
+.panel {
     background: #291a12;
-    border: 1px solid #75401e;
+    border: 1px solid #70401f;
     border-radius: 14px;
-    padding: 18px;
-    margin-top: 18px;
+    padding: 17px;
 }
 
-h2 {
+.panel h2 {
     color: #ffad61;
     margin-top: 0;
+    font-size: 19px;
 }
 
 .buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 9px;
 }
 
 button {
-    background: #a94e19;
-    color: white;
-    border: none;
+    border: 0;
     border-radius: 9px;
-    padding: 12px 16px;
-    font-size: 14px;
+    background: #a95320;
+    color: white;
+    padding: 12px 15px;
     cursor: pointer;
+    font-size: 14px;
+    transition: .15s;
 }
 
-button:hover { background: #cf6828; }
+button:hover {
+    background: #d16d2c;
+    transform: translateY(-1px);
+}
+
 button:disabled {
-    opacity: .45;
+    opacity: .4;
     cursor: not-allowed;
+    transform: none;
+}
+
+button.secondary {
+    background: #59402d;
+}
+
+button.secondary:hover {
+    background: #78543a;
+}
+
+button.active {
+    outline: 2px solid #ffc276;
+    background: #ce702c;
 }
 
 .message {
+    background: #3a2518;
+    color: #ffd09b;
+    border-radius: 10px;
+    padding: 12px;
     margin-top: 15px;
-    color: #ffc18c;
-    min-height: 24px;
+    min-height: 42px;
 }
 
-.mode {
-    display: inline-block;
-    padding: 7px 12px;
-    border-radius: 8px;
-    background: #56331e;
-    margin-bottom: 12px;
+.upgrade-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #50301e;
+}
+
+.upgrade-row:last-child {
+    border-bottom: 0;
+}
+
+.upgrade-row small {
+    display: block;
+    color: #b99a80;
+    margin-top: 4px;
 }
 
 footer {
     text-align: center;
+    color: #8d705c;
     padding: 25px;
-    color: #9b7961;
+}
+
+@media(max-width:700px) {
+    .topbar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .panels {
+        grid-template-columns: 1fr;
+    }
+
+    header {
+        padding: 13px;
+    }
+
+    main {
+        padding: 12px;
+    }
+
+    button {
+        flex: 1;
+    }
 }
 </style>
 </head>
@@ -214,356 +239,926 @@ footer {
 
 <main>
     <h1>⚔️ КотоДуэль</h1>
-    <p>Уничтожь вражескую башню и одержи победу!</p>
+    <p class="subtitle">Построй армию, добывай золото и уничтожь вражескую башню!</p>
 
-    <div class="stats">
+    <div class="topbar">
         <div class="stat">
-            Золото
-            <strong id="gold">100</strong>
+            <span>🪙 Золото</span>
+            <strong id="gold">150</strong>
         </div>
         <div class="stat">
-            Уровень
-            <strong id="level">1</strong>
-        </div>
-        <div class="stat">
-            Шахтёры
+            <span>⛏️ Шахтёры</span>
             <strong id="miners">0</strong>
         </div>
         <div class="stat">
-            Армия
+            <span>🐱 Бойцы</span>
             <strong id="army">0</strong>
         </div>
+        <div class="stat">
+            <span>🏆 Уровень</span>
+            <strong id="level">1</strong>
+        </div>
     </div>
 
-    <div class="arena" id="arena">
-        <div class="ground"></div>
+    <div class="game-frame">
+        <div class="canvas-wrap">
+            <canvas id="game" width="1100" height="390"></canvas>
+            <div class="wave-label" id="waveLabel">Уровень 1 · Подготовка</div>
+        </div>
+    </div>
 
-        <div class="tower player-tower">
-            🏰
-            <div class="health">
-                <div class="health-fill" id="playerHealth"></div>
+    <div class="panels">
+        <section class="panel">
+            <h2>🐱 Армия</h2>
+
+            <div class="buttons">
+                <button id="buyMiner">⛏️ Шахтёр · 30</button>
+                <button id="buyWarrior">⚔️ Боец · 50</button>
             </div>
-        </div>
 
-        <div class="tower enemy-tower">
-            🏰
-            <div class="health">
-                <div class="health-fill" id="enemyHealth"></div>
+            <h2 style="margin-top:22px">Тактика</h2>
+            <div class="buttons">
+                <button id="defense" class="secondary active">🛡️ Защита</button>
+                <button id="attack" class="secondary">⚔️ Атака</button>
             </div>
-        </div>
 
-        <div class="gold-pile">🪙</div>
-        <div class="enemy-gold">🪙</div>
+            <p style="color:#b99a80;font-size:13px">
+                В режиме защиты бойцы охраняют твою башню.
+                В режиме атаки они идут к вражеской башне.
+            </p>
+        </section>
+
+        <section class="panel">
+            <h2>🔧 Улучшения</h2>
+
+            <div class="upgrade-row">
+                <div>
+                    <strong>💰 Экономика</strong>
+                    <small id="incomeInfo">Пассивный доход: 1 золото/сек.</small>
+                </div>
+                <button id="upgradeIncome">100 🪙</button>
+            </div>
+
+            <div class="upgrade-row">
+                <div>
+                    <strong>🏰 Урон башни</strong>
+                    <small id="damageInfo">Урон: 5</small>
+                </div>
+                <button id="upgradeDamage">120 🪙</button>
+            </div>
+
+            <div class="upgrade-row">
+                <div>
+                    <strong>❤️ Прочность башни</strong>
+                    <small id="healthInfo">Максимум: 100</small>
+                </div>
+                <button id="upgradeHealth">100 🪙</button>
+            </div>
+        </section>
     </div>
 
-    <div class="controls">
-        <h2>Покупка</h2>
+    <section class="panel" style="margin-top:15px">
+        <h2>🎮 Управление игрой</h2>
         <div class="buttons">
-            <button onclick="buyMiner()">⛏️ Шахтёр — 30 золота</button>
-            <button onclick="buyUnit()">🐱 Боец — 50 золота</button>
+            <button id="pause" class="secondary">⏸ Пауза</button>
+            <button id="restart" class="secondary">↻ Начать заново</button>
         </div>
-    </div>
-
-    <div class="controls">
-        <h2>Управление армией</h2>
-        <div class="mode">
-            Режим: <strong id="mode">Защита</strong>
+        <div class="message" id="message">
+            Добро пожаловать! Купи шахтёров и подготовь свою армию.
         </div>
-        <div class="buttons">
-            <button onclick="setMode('defense')">🛡️ Защита</button>
-            <button onclick="setMode('attack')">⚔️ Атака</button>
-        </div>
-    </div>
-
-    <div class="upgrades">
-        <h2>Улучшения</h2>
-        <div class="buttons">
-            <button onclick="upgradeIncome()">
-                💰 Доход +1 — 100 золота
-            </button>
-            <button onclick="upgradeDamage()">
-                🏰 Урон башни +5 — 120 золота
-            </button>
-        </div>
-        <p>Доход в секунду: <strong id="income">1</strong></p>
-        <p>Урон башни: <strong id="damage">5</strong></p>
-    </div>
-
-    <div class="message" id="message">
-        Построй свою армию и приготовься к битве!
-    </div>
+    </section>
 </main>
 
-<footer>КотоДуэль · Игра КотоPlay</footer>
+<footer>КотоДуэль · Часть вселенной Котостей</footer>
 
 <script>
-let gold = 100;
+"use strict";
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const W = canvas.width;
+const H = canvas.height;
+const GROUND = 315;
+
+let gold = 150;
 let level = 1;
+let miners = [];
+let warriors = [];
+let enemies = [];
 
-let miners = 0;
-let army = [];
+let playerTower = {
+    hp: 100,
+    maxHp: 100,
+    damage: 5,
+    attackTimer: 0
+};
 
-let income = 1;
-let towerDamage = 5;
+let enemyTower = {
+    hp: 100,
+    maxHp: 100,
+    damage: 4
+};
 
-let playerHP = 100;
-let enemyHP = 100;
+let passiveIncome = 1;
+let incomeLevel = 0;
+let damageLevel = 0;
+let healthLevel = 0;
 
 let mode = "defense";
-let enemyUnits = [];
+let paused = false;
+let finished = false;
+let victory = false;
 
-let gameOver = false;
-let enemyTimer = 0;
+let enemySpawnTimer = 4;
+let gameTime = 0;
+let lastTime = performance.now();
+let saveTimer = 0;
 
-const arena = document.getElementById("arena");
+const $ = id => document.getElementById(id);
 
-function update() {
-    document.getElementById("gold").textContent = Math.floor(gold);
-    document.getElementById("level").textContent = level;
-    document.getElementById("miners").textContent = miners;
-    document.getElementById("army").textContent = army.length;
-    document.getElementById("income").textContent = income;
-    document.getElementById("damage").textContent = towerDamage;
-
-    document.getElementById("mode").textContent =
-        mode === "attack" ? "Атака" : "Защита";
-
-    document.getElementById("playerHealth").style.width =
-        Math.max(0, playerHP) + "%";
-
-    document.getElementById("enemyHealth").style.width =
-        Math.max(0, enemyHP) + "%";
+function showMessage(text) {
+    $("message").textContent = text;
 }
 
-function message(text) {
-    document.getElementById("message").textContent = text;
+function makeCat(x, team, type) {
+    return {
+        x,
+        y: GROUND,
+        team,
+        type,
+        hp: type === "warrior" ? 45 : 35,
+        maxHp: type === "warrior" ? 45 : 35,
+        speed: type === "miner" ? 65 : 45,
+        damage: type === "warrior" ? 9 : 6,
+        attackTimer: 0,
+        miningTimer: 0,
+        carrying: false,
+        target: null,
+        direction: team === "player" ? 1 : -1,
+        bob: Math.random() * 10,
+        alive: true
+    };
 }
 
 function buyMiner() {
-    if (gameOver) return;
+    if (finished || paused) return;
 
     if (gold < 30) {
-        message("Недостаточно золота!");
+        showMessage("Не хватает золота на шахтёра!");
         return;
     }
 
     gold -= 30;
-    miners++;
-    message("Новый шахтёр отправился добывать золото!");
-    update();
+    miners.push(makeCat(145, "player", "miner"));
+    showMessage("Новый шахтёр отправился к золотой жиле!");
+    updateUI();
 }
 
-function buyUnit() {
-    if (gameOver) return;
+function buyWarrior() {
+    if (finished || paused) return;
 
     if (gold < 50) {
-        message("Недостаточно золота!");
+        showMessage("Не хватает золота на бойца!");
         return;
     }
 
     gold -= 50;
-
-    army.push({
-        x: 115,
-        hp: 30,
-        damage: 5,
-        element: null
-    });
-
-    message("Новый боец присоединился к твоей армии!");
-    drawUnits();
-    update();
+    warriors.push(makeCat(125, "player", "warrior"));
+    showMessage("Новый кот-боец готов к сражению!");
+    updateUI();
 }
 
 function setMode(newMode) {
-    if (gameOver) return;
+    if (finished || paused) return;
 
     mode = newMode;
 
-    message(
-        mode === "attack"
-        ? "Армия отправляется атаковать!"
-        : "Армия возвращается защищать башню!"
-    );
+    $("attack").classList.toggle("active", mode === "attack");
+    $("defense").classList.toggle("active", mode === "defense");
 
-    update();
-    drawUnits();
+    showMessage(
+        mode === "attack"
+        ? "Твоя армия получила приказ наступать!"
+        : "Твоя армия получила приказ защищать башню!"
+    );
 }
 
 function upgradeIncome() {
-    if (gameOver) return;
-
-    if (gold < 100) {
-        message("Недостаточно золота!");
+    if (gold < 100 || finished || paused) {
+        showMessage("Недостаточно золота!");
         return;
     }
 
     gold -= 100;
-    income++;
-    message("Доход увеличен!");
-    update();
+    incomeLevel++;
+    passiveIncome++;
+    showMessage("Экономика улучшена! Пассивный доход увеличен.");
+    updateUI();
 }
 
 function upgradeDamage() {
-    if (gameOver) return;
-
-    if (gold < 120) {
-        message("Недостаточно золота!");
+    if (gold < 120 || finished || paused) {
+        showMessage("Недостаточно золота!");
         return;
     }
 
     gold -= 120;
-    towerDamage += 5;
-    message("Урон башни увеличен!");
-    update();
+    damageLevel++;
+    playerTower.damage += 3;
+    showMessage("Башня стала наносить больше урона!");
+    updateUI();
 }
 
-function drawUnits() {
-    document.querySelectorAll(".unit").forEach(el => el.remove());
+function upgradeHealth() {
+    if (gold < 100 || finished || paused) {
+        showMessage("Недостаточно золота!");
+        return;
+    }
 
-    army.forEach((unit, index) => {
-        const el = document.createElement("div");
-        el.className = "unit";
-        el.textContent = "🐱";
-
-        const position = mode === "attack"
-            ? Math.min(700, 120 + index * 25)
-            : 115 + index * 20;
-
-        el.style.left = position + "px";
-        el.dataset.index = index;
-
-        arena.appendChild(el);
-        unit.element = el;
-    });
-
-    enemyUnits.forEach((unit, index) => {
-        const el = document.createElement("div");
-        el.className = "unit";
-        el.textContent = "🐈‍⬛";
-        el.style.left = unit.x + "px";
-        el.style.bottom = "36%";
-        arena.appendChild(el);
-        unit.element = el;
-    });
+    gold -= 100;
+    healthLevel++;
+    playerTower.maxHp += 25;
+    playerTower.hp = Math.min(
+        playerTower.maxHp,
+        playerTower.hp + 25
+    );
+    showMessage("Башня укреплена!");
+    updateUI();
 }
 
 function spawnEnemy() {
-    if (gameOver) return;
-
-    enemyUnits.push({
-        x: 700,
-        hp: 30,
-        damage: 5,
-        element: null
-    });
-
-    drawUnits();
+    enemies.push(makeCat(930, "enemy", "warrior"));
 }
 
-function finishGame(won) {
-    gameOver = true;
+function distance(a, b) {
+    return Math.abs(a.x - b.x);
+}
 
-    if (won) {
-        message("🏆 Победа! Вражеская башня разрушена!");
-        gold += 100;
-        setTimeout(() => {
-            if (confirm("Перейти на следующий уровень?")) {
-                nextLevel();
-            }
-        }, 300);
-    } else {
-        message("Вражеская армия разрушила твою башню!");
+function nearestEnemy(unit, list, maxDistance = Infinity) {
+    let best = null;
+    let bestDistance = maxDistance;
+
+    for (const target of list) {
+        if (!target.alive) continue;
+
+        const d = distance(unit, target);
+
+        if (d < bestDistance) {
+            best = target;
+            bestDistance = d;
+        }
     }
 
-    update();
+    return best;
+}
+
+function hit(attacker, target, dt) {
+    attacker.attackTimer -= dt;
+
+    if (attacker.attackTimer <= 0) {
+        target.hp -= attacker.damage;
+        attacker.attackTimer = 0.85;
+    }
+}
+
+function updateMiners(dt) {
+    for (const miner of miners) {
+        const pileX = 245;
+        const homeX = 125;
+
+        if (!miner.carrying) {
+            miner.x += miner.speed * dt;
+
+            if (miner.x >= pileX) {
+                miner.x = pileX;
+                miner.miningTimer += dt;
+
+                if (miner.miningTimer >= 1.2) {
+                    miner.miningTimer = 0;
+                    miner.carrying = true;
+                }
+            }
+        } else {
+            miner.x -= miner.speed * dt;
+
+            if (miner.x <= homeX) {
+                miner.x = homeX;
+                miner.carrying = false;
+                gold += 8;
+            }
+        }
+    }
+}
+
+function updateWarriors(dt) {
+    for (const unit of warriors) {
+        let target = nearestEnemy(unit, enemies, 65);
+
+        if (!target && mode === "attack") {
+            target = nearestEnemy(unit, [enemyTower], 99999);
+        }
+
+        if (target && target !== enemyTower) {
+            if (distance(unit, target) > 28) {
+                unit.x += Math.sign(target.x - unit.x) * unit.speed * dt;
+            } else {
+                hit(unit, target, dt);
+            }
+        } else if (target === enemyTower) {
+            if (Math.abs(unit.x - 970) > 55) {
+                unit.x += unit.speed * dt;
+            } else {
+                hit(unit, enemyTower, dt);
+            }
+        } else if (mode === "defense") {
+            const guardX = 180 + (warriors.indexOf(unit) % 4) * 24;
+
+            if (unit.x > guardX) {
+                unit.x -= unit.speed * dt;
+            } else if (unit.x < guardX) {
+                unit.x += unit.speed * dt;
+            }
+        }
+    }
+}
+
+function updateEnemies(dt) {
+    for (const enemy of enemies) {
+        const target = nearestEnemy(enemy, warriors, 40);
+
+        if (target) {
+            if (distance(enemy, target) > 28) {
+                enemy.x -= enemy.speed * dt;
+            } else {
+                hit(enemy, target, dt);
+            }
+        } else {
+            if (enemy.x > 95) {
+                enemy.x -= enemy.speed * dt;
+            } else {
+                hit(enemy, playerTower, dt);
+            }
+        }
+    }
+
+    enemies = enemies.filter(e => e.hp > 0);
+    warriors = warriors.filter(e => e.hp > 0);
+}
+
+function update(dt) {
+    if (paused || finished) return;
+
+    gameTime += dt;
+    gold += passiveIncome * dt;
+
+    updateMiners(dt);
+    updateWarriors(dt);
+    updateEnemies(dt);
+
+    enemySpawnTimer -= dt;
+
+    if (enemySpawnTimer <= 0) {
+        spawnEnemy();
+        enemySpawnTimer = Math.max(3.5, 8 - level * 0.35);
+    }
+
+    playerTower.attackTimer -= dt;
+
+    if (playerTower.attackTimer <= 0 && enemies.length > 0) {
+        const target = nearestEnemy(
+            {x: 110},
+            enemies,
+            300
+        );
+
+        if (target) {
+            target.hp -= playerTower.damage;
+            playerTower.attackTimer = 1.4;
+        }
+    }
+
+    if (enemyTower.hp <= 0) {
+        winLevel();
+    }
+
+    if (playerTower.hp <= 0) {
+        loseLevel();
+    }
+
+    saveTimer += dt;
+
+    if (saveTimer >= 5) {
+        saveTimer = 0;
+        saveGame();
+    }
+}
+
+function winLevel() {
+    if (finished) return;
+
+    finished = true;
+    victory = true;
+    gold += 100;
+
+    showMessage(
+        "🏆 Победа! Ты разрушил вражескую башню. Награда: 100 золота."
+    );
+
+    $("waveLabel").textContent = "🏆 Победа!";
+    updateUI();
+    saveGame();
+}
+
+function loseLevel() {
+    if (finished) return;
+
+    finished = true;
+    victory = false;
+
+    showMessage("Башня разрушена! Попробуй ещё раз.");
+    $("waveLabel").textContent = "Поражение";
+    updateUI();
 }
 
 function nextLevel() {
-    level++;
-    playerHP = 100;
-    enemyHP = 100 + (level - 1) * 25;
-    enemyUnits = [];
-    army = [];
-    gameOver = false;
-    mode = "defense";
-    enemyTimer = 0;
+    if (!finished || !victory) return;
 
-    message("Начался уровень " + level + "! Удачи!");
-    drawUnits();
-    update();
+    level++;
+
+    playerTower.hp = playerTower.maxHp;
+    enemyTower.maxHp = 100 + (level - 1) * 35;
+    enemyTower.hp = enemyTower.maxHp;
+
+    enemies = [];
+    warriors = [];
+    miners = [];
+
+    enemySpawnTimer = 5;
+    finished = false;
+    victory = false;
+    paused = false;
+
+    $("pause").textContent = "⏸ Пауза";
+    $("waveLabel").textContent = "Уровень " + level;
+
+    showMessage("Начался уровень " + level + "! Противник стал сильнее.");
+    updateUI();
+    saveGame();
 }
 
-let lastTime = Date.now();
+function drawBackground() {
+    const sky = ctx.createLinearGradient(0, 0, 0, GROUND);
+    sky.addColorStop(0, "#72b9dd");
+    sky.addColorStop(1, "#d4e8c2");
 
-function gameLoop() {
-    const now = Date.now();
-    const delta = Math.min((now - lastTime) / 1000, 0.1);
-    lastTime = now;
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
 
-    if (!gameOver) {
-        gold += (income + miners * 2) * delta;
+    // Солнце
+    ctx.fillStyle = "#ffe38a";
+    ctx.beginPath();
+    ctx.arc(850, 65, 33, 0, Math.PI * 2);
+    ctx.fill();
 
-        enemyTimer += delta;
+    // Облака
+    drawCloud(190, 75);
+    drawCloud(570, 48);
 
-        if (enemyTimer >= Math.max(3, 8 - level * 0.3)) {
-            enemyTimer = 0;
-            spawnEnemy();
-        }
+    // Холмы
+    ctx.fillStyle = "#8db77c";
+    ctx.beginPath();
+    ctx.moveTo(0, 250);
+    ctx.quadraticCurveTo(220, 140, 440, 250);
+    ctx.quadraticCurveTo(720, 150, 1100, 245);
+    ctx.lineTo(1100, GROUND);
+    ctx.lineTo(0, GROUND);
+    ctx.fill();
 
-        army.forEach(unit => {
-            if (mode === "attack") {
-                if (enemyUnits.length > 0) {
-                    const enemy = enemyUnits[0];
-                    enemy.hp -= unit.damage * delta;
+    // Земля
+    ctx.fillStyle = "#a66a3d";
+    ctx.fillRect(0, GROUND, W, H - GROUND);
 
-                    if (enemy.hp <= 0) {
-                        enemyUnits.shift();
-                        gold += 10;
-                    }
-                } else {
-                    enemyHP -= unit.damage * delta;
-                }
-            } else {
-                if (enemyUnits.length > 0) {
-                    const enemy = enemyUnits[0];
-                    enemy.hp -= unit.damage * delta;
+    ctx.fillStyle = "#72a64e";
+    ctx.fillRect(0, GROUND, W, 13);
 
-                    if (enemy.hp <= 0) {
-                        enemyUnits.shift();
-                        gold += 10;
-                    }
-                }
-            }
-        });
+    // Дорога
+    ctx.fillStyle = "#d6aa72";
+    ctx.fillRect(0, GROUND + 13, W, 48);
 
-        enemyUnits.forEach(enemy => {
-            enemy.x -= 15 * delta;
+    ctx.fillStyle = "#b78656";
 
-            if (enemy.x <= 110) {
-                playerHP -= enemy.damage * delta;
-            }
-        });
-
-        if (Math.floor(now / 1000) !== Math.floor((now - delta * 1000) / 1000)) {
-            if (enemyUnits.length === 0) {
-                enemyHP -= towerDamage;
-            }
-        }
-
-        if (enemyHP <= 0) finishGame(true);
-        if (playerHP <= 0) finishGame(false);
-
-        update();
-
-        if (Math.random() < 0.2) drawUnits();
+    for (let x = 0; x < W; x += 65) {
+        ctx.fillRect(x, GROUND + 34, 30, 3);
     }
 
-    requestAnimationFrame(gameLoop);
+    // Декоративные кусты
+    drawBush(390, GROUND + 8);
+    drawBush(710, GROUND + 8);
 }
 
-update();
-gameLoop();
+function drawCloud(x, y) {
+    ctx.fillStyle = "rgba(255,255,255,.8)";
+    ctx.beginPath();
+    ctx.arc(x, y, 18, 0, Math.PI * 2);
+    ctx.arc(x + 22, y - 9, 23, 0, Math.PI * 2);
+    ctx.arc(x + 48, y, 17, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawBush(x, y) {
+    ctx.fillStyle = "#4f8b46";
+    ctx.beginPath();
+    ctx.arc(x, y, 18, 0, Math.PI * 2);
+    ctx.arc(x + 18, y - 8, 17, 0, Math.PI * 2);
+    ctx.arc(x + 33, y, 16, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawTower(x, enemy) {
+    const color = enemy ? "#a44e49" : "#bd7338";
+    const dark = enemy ? "#75332f" : "#77401f";
+
+    ctx.fillStyle = dark;
+    ctx.fillRect(x - 38, 175, 76, 145);
+
+    ctx.fillStyle = color;
+    ctx.fillRect(x - 33, 181, 66, 139);
+
+    // Башенки
+    ctx.fillStyle = dark;
+    ctx.fillRect(x - 42, 165, 24, 28);
+    ctx.fillRect(x + 18, 165, 24, 28);
+
+    ctx.fillStyle = color;
+    ctx.fillRect(x - 39, 162, 18, 25);
+    ctx.fillRect(x + 21, 162, 18, 25);
+
+    // Окна
+    ctx.fillStyle = "#39251b";
+    ctx.fillRect(x - 9, 230, 18, 35);
+
+    // Флаг
+    ctx.strokeStyle = "#443020";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, 120);
+    ctx.lineTo(x, 165);
+    ctx.stroke();
+
+    ctx.fillStyle = enemy ? "#d85e58" : "#ffbd58";
+    ctx.beginPath();
+    ctx.moveTo(x, 122);
+    ctx.lineTo(x + (enemy ? -29 : 29), 133);
+    ctx.lineTo(x, 144);
+    ctx.fill();
+
+    drawHealthBar(
+        x - 42,
+        104,
+        84,
+        10,
+        enemy ? enemyTower.hp : playerTower.hp,
+        enemy ? enemyTower.maxHp : playerTower.maxHp
+    );
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 13px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(enemy ? "Враг" : "Ты", x, 96);
+}
+
+function drawHealthBar(x, y, w, h, hp, maxHp) {
+    ctx.fillStyle = "#4b2521";
+    ctx.fillRect(x, y, w, h);
+
+    ctx.fillStyle = hp > maxHp * .35 ? "#65ce64" : "#e65c4f";
+    ctx.fillRect(x, y, w * Math.max(0, hp / maxHp), h);
+
+    ctx.strokeStyle = "#fff0df";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
+}
+
+function drawGoldPile() {
+    ctx.fillStyle = "#c58a25";
+
+    for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.ellipse(
+            240 + i * 8,
+            GROUND + 3 - (i % 2) * 5,
+            13,
+            7,
+            0,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+    }
+
+    ctx.fillStyle = "#ffe17a";
+    ctx.font = "bold 13px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("ЗОЛОТО", 260, GROUND + 53);
+}
+
+function drawCat(cat) {
+    const x = cat.x;
+    const y = GROUND - 5 + Math.sin(cat.bob + gameTime * 5) * 2;
+    const enemy = cat.team === "enemy";
+    const color = enemy ? "#48404d" :
+        cat.type === "miner" ? "#e9c6a0" : "#f2a75c";
+
+    // Тень
+    ctx.fillStyle = "rgba(30,20,15,.2)";
+    ctx.beginPath();
+    ctx.ellipse(x, GROUND + 3, 16, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Хвост
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x - 8, y - 14);
+    ctx.quadraticCurveTo(
+        x - 22,
+        y - 28,
+        x - 13,
+        y - 34
+    );
+    ctx.stroke();
+
+    // Тело
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 10, 13, 17, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Голова
+    ctx.beginPath();
+    ctx.arc(x, y - 31, 13, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Уши
+    ctx.beginPath();
+    ctx.moveTo(x - 12, y - 36);
+    ctx.lineTo(x - 11, y - 51);
+    ctx.lineTo(x - 2, y - 42);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(x + 12, y - 36);
+    ctx.lineTo(x + 11, y - 51);
+    ctx.lineTo(x + 2, y - 42);
+    ctx.fill();
+
+    // Глаза
+    ctx.fillStyle = "#302018";
+    ctx.beginPath();
+    ctx.arc(x - 5, y - 32, 1.8, 0, Math.PI * 2);
+    ctx.arc(x + 5, y - 32, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Нос
+    ctx.fillStyle = "#d87c78";
+    ctx.beginPath();
+    ctx.arc(x, y - 26, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Инструмент шахтёра
+    if (cat.type === "miner") {
+        ctx.strokeStyle = "#67432c";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + 10, y - 17);
+        ctx.lineTo(x + 18, y - 43);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#d2d2d2";
+        ctx.beginPath();
+        ctx.moveTo(x + 11, y - 42);
+        ctx.lineTo(x + 25, y - 42);
+        ctx.stroke();
+
+        if (cat.carrying) {
+            ctx.fillStyle = "#ffdb60";
+            ctx.beginPath();
+            ctx.arc(x, y - 59, 7, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    } else {
+        // Шлем бойца
+        ctx.fillStyle = enemy ? "#8f5353" : "#6796b4";
+        ctx.fillRect(x - 12, y - 45, 24, 6);
+
+        // Меч
+        ctx.strokeStyle = "#e8e8e8";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + 13, y - 16);
+        ctx.lineTo(x + 22, y - 36);
+        ctx.stroke();
+    }
+
+    if (cat.hp < cat.maxHp) {
+        drawHealthBar(
+            x - 15,
+            y - 65,
+            30,
+            4,
+            cat.hp,
+            cat.maxHp
+        );
+    }
+}
+
+function draw() {
+    drawBackground();
+
+    drawGoldPile();
+
+    drawTower(75, false);
+    drawTower(1025, true);
+
+    // Подписи режимов
+    ctx.fillStyle = "#39251c";
+    ctx.font = "bold 15px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+        mode === "attack" ? "⚔️ НАСТУПЛЕНИЕ" : "🛡️ ОБОРОНА",
+        550,
+        105
+    );
+
+    for (const miner of miners) {
+        drawCat(miner);
+    }
+
+    for (const warrior of warriors) {
+        drawCat(warrior);
+    }
+
+    for (const enemy of enemies) {
+        drawCat(enemy);
+    }
+
+    if (paused || finished) {
+        ctx.fillStyle = "rgba(20,12,8,.65)";
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "#fff2df";
+        ctx.font = "bold 36px Arial";
+        ctx.textAlign = "center";
+
+        ctx.fillText(
+            paused ? "ПАУЗА" :
+            victory ? "ПОБЕДА!" : "ПОРАЖЕНИЕ",
+            W / 2,
+            H / 2
+        );
+
+        ctx.font = "18px Arial";
+        ctx.fillText(
+            paused ? "Нажми продолжить, чтобы вернуться в бой" :
+            victory ? "Награда: 100 золота" :
+            "Попробуй ещё раз",
+            W / 2,
+            H / 2 + 35
+        );
+    }
+}
+
+function updateUI() {
+    $("gold").textContent = Math.floor(gold);
+    $("miners").textContent = miners.length;
+    $("army").textContent = warriors.length;
+    $("level").textContent = level;
+
+    $("incomeInfo").textContent =
+        "Пассивный доход: " + passiveIncome + " золота/сек.";
+
+    $("damageInfo").textContent =
+        "Урон башни: " + playerTower.damage;
+
+    $("healthInfo").textContent =
+        "Прочность: " + Math.ceil(playerTower.hp) +
+        " / " + playerTower.maxHp;
+
+    $("waveLabel").textContent =
+        "Уровень " + level + " · " +
+        (finished ? victory ? "Победа" : "Поражение" :
+        paused ? "Пауза" : "Сражение");
+}
+
+function saveGame() {
+    const data = {
+        gold,
+        level,
+        playerTower,
+        passiveIncome,
+        incomeLevel,
+        damageLevel,
+        healthLevel
+    };
+
+    try {
+        localStorage.setItem("kotoduel_save", JSON.stringify(data));
+    } catch (error) {
+        console.warn("Не удалось сохранить игру", error);
+    }
+}
+
+function loadGame() {
+    try {
+        const raw = localStorage.getItem("kotoduel_save");
+        if (!raw) return;
+
+        const data = JSON.parse(raw);
+
+        if (!data || typeof data !== "object") return;
+
+        gold = Math.max(0, Number(data.gold) || 0);
+        level = Math.max(1, Number(data.level) || 1);
+
+        if (data.playerTower) {
+            playerTower.maxHp = Math.max(100, Number(data.playerTower.maxHp) || 100);
+            playerTower.hp = Math.min(
+                playerTower.maxHp,
+                Math.max(1, Number(data.playerTower.hp) || playerTower.maxHp)
+            );
+            playerTower.damage = Math.max(5, Number(data.playerTower.damage) || 5);
+        }
+
+        passiveIncome = Math.max(1, Number(data.passiveIncome) || 1);
+        incomeLevel = Math.max(0, Number(data.incomeLevel) || 0);
+        damageLevel = Math.max(0, Number(data.damageLevel) || 0);
+        healthLevel = Math.max(0, Number(data.healthLevel) || 0);
+
+        enemyTower.maxHp = 100 + (level - 1) * 35;
+        enemyTower.hp = enemyTower.maxHp;
+    } catch (error) {
+        console.warn("Сохранение повреждено", error);
+    }
+}
+
+function restartGame() {
+    if (!confirm("Начать заново? Текущий прогресс будет сброшен.")) {
+        return;
+    }
+
+    localStorage.removeItem("kotoduel_save");
+    location.reload();
+}
+
+function frame(now) {
+    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    lastTime = now;
+
+    if (!paused && !finished) {
+        update(dt);
+    }
+
+    draw();
+    updateUI();
+
+    requestAnimationFrame(frame);
+}
+
+$("buyMiner").addEventListener("click", buyMiner);
+$("buyWarrior").addEventListener("click", buyWarrior);
+
+$("attack").addEventListener("click", () => setMode("attack"));
+$("defense").addEventListener("click", () => setMode("defense"));
+
+$("upgradeIncome").addEventListener("click", upgradeIncome);
+$("upgradeDamage").addEventListener("click", upgradeDamage);
+$("upgradeHealth").addEventListener("click", upgradeHealth);
+
+$("pause").addEventListener("click", () => {
+    if (finished) {
+        if (victory) {
+            nextLevel();
+        } else {
+            showMessage("Нажми «Начать заново», чтобы повторить игру.");
+        }
+        return;
+    }
+
+    paused = !paused;
+
+    $("pause").textContent = paused ? "▶ Продолжить" : "⏸ Пауза";
+
+    showMessage(paused ? "Игра приостановлена." : "Сражение продолжается!");
+    updateUI();
+});
+
+$("restart").addEventListener("click", restartGame);
+
+loadGame();
+updateUI();
+requestAnimationFrame(frame);
 </script>
 
 </body>
