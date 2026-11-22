@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Хороший отсчёт</title>
+<style>
+:root{--bg:#17120f;--panel:#261b15;--panel2:#342219;--orange:#f28b35;--gold:#ffd166;--text:#fff4e8;--muted:#cbb7a5;--green:#77d69a;--red:#ff7777}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#49301c,#17120f 60%);color:var(--text);font-family:system-ui,Segoe UI,sans-serif;min-height:100vh;display:grid;place-items:center;padding:18px}
+main{width:min(760px,100%);background:#211711;border:1px solid #684329;border-radius:24px;padding:clamp(18px,4vw,34px);box-shadow:0 22px 70px #0008}
+h1{margin:0 0 8px;font-size:clamp(30px,6vw,48px);color:var(--gold)}p{color:var(--muted);line-height:1.5}.screen{display:none}.screen.active{display:block}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:180px}
+input{width:100%;padding:13px;border-radius:12px;border:1px solid #775033;background:#140f0c;color:white;font-size:16px;margin:7px 0 12px}
+button{border:0;border-radius:12px;padding:13px 17px;background:var(--orange);color:#24150c;font-weight:800;font-size:15px;cursor:pointer;margin:5px 4px 5px 0}
+button.secondary{background:#4a3527;color:var(--text);border:1px solid #80583b}button:disabled{opacity:.45;cursor:not-allowed}
+.card{background:var(--panel2);border:1px solid #69452d;border-radius:16px;padding:18px;margin:14px 0}
+.big{font-size:clamp(64px,16vw,112px);font-weight:900;line-height:1;color:var(--gold);font-variant-numeric:tabular-nums;text-align:center;margin:24px 0}
+.meter{height:12px;background:#110c09;border-radius:20px;overflow:hidden;margin:12px 0}.meter>div{height:100%;width:0;background:linear-gradient(90deg,#ef8b38,#ffe18b);transition:width .08s linear}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:12px}.player{padding:14px;border-radius:14px;background:#38271c;border:1px solid #765034}.player strong{display:block;font-size:18px}.score{font-size:30px;color:var(--gold);font-weight:900}
+.status{min-height:26px;color:var(--green);font-weight:700}.hint{font-size:13px;color:#bda58f}.press{width:100%;font-size:24px;padding:22px;background:linear-gradient(135deg,#ffb14b,#f0782b);margin-top:16px}
+footer{font-size:12px;color:#987e69;margin-top:18px}
+</style>
+</head>
+<body>
+<main>
+  <h1>⏱ Хороший отсчёт</h1>
+  <p>Поймай нужный момент! Побеждает тот, кто нажмёт кнопку ближе всего к окончанию заданного времени. Матч идёт до трёх побед.</p>
+
+  <section id="setup" class="screen active">
+    <div class="card">
+      <label>Твоё имя</label><input id="nick" maxlength="18" placeholder="Например, Котост">
+      <label>Код комнаты для подключения</label><input id="roomCode" maxlength="8" placeholder="Например, CAT123">
+      <div class="row">
+        <button id="createBtn">Создать онлайн-комнату</button>
+        <button class="secondary" id="joinBtn">Подключиться</button>
+      </div>
+      <p class="hint">Для онлайн-игры оба игрока должны открыть эту страницу. Создатель отправляет другу код комнаты.</p>
+    </div>
+    <div class="status" id="setupStatus"></div>
+  </section>
+
+  <section id="waiting" class="screen">
+    <div class="card">
+      <p>Код комнаты</p><div class="big" style="font-size:52px" id="codeView">——</div>
+      <p id="waitingText">Ждём второго игрока…</p>
+      <button class="secondary" id="backBtn">Назад</button>
+    </div>
+  </section>
+
+  <section id="game" class="screen">
+    <div class="players">
+      <div class="player"><strong id="p1name">Игрок 1</strong><span class="score" id="p1score">0</span><div class="hint" id="p1result">Победы</div></div>
+      <div class="player"><strong id="p2name">Игрок 2</strong><span class="score" id="p2score">0</span><div class="hint" id="p2result">Победы</div></div>
+    </div>
+    <div class="card">
+      <div class="status" id="roundStatus">Раунд 1. Приготовься…</div>
+      <div class="big" id="timer">6.00</div>
+      <div class="meter"><div id="meterFill"></div></div>
+      <p style="text-align:center">Нужно нажать как можно ближе к моменту, когда таймер дойдёт до нуля.</p>
+      <button class="press" id="pressBtn" disabled>НАЖАТЬ!</button>
+      <p class="hint" id="myStatus">Кнопка станет доступна после старта отсчёта.</p>
+    </div>
+    <div class="status" id="gameStatus"></div>
+  </section>
+
+  <section id="finished" class="screen">
+    <div class="card" style="text-align:center">
+      <div style="font-size:56px">🏆</div>
+      <h2 id="winnerText">Победитель!</h2>
+      <p id="finishText"></p>
+      <button id="rematchBtn">Сыграть ещё раз</button>
+      <button class="secondary" id="exitBtn">В меню</button>
+    </div>
+  </section>
+  <footer>Прототип онлайн-игры. Для подключения Supabase укажи URL проекта и publishable key в настройках файла.</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://wrziasmcufzmwjlnlnbs.supabase.co";
+const SUPABASE_KEY = "ВСТАВЬ_СЮДА_СВОЙ_sb_publishable_КЛЮЧ";
+const sb = window.supabase && SUPABASE_KEY.startsWith("sb_publishable_") ? window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY) : null;
+const $=id=>document.getElementById(id);
+let room=null, channel=null, myId=crypto.randomUUID(), myName="", myIndex=0, gameState={}, poll=null, raf=null, localStart=0, pressed=false, scheduledRound=null;
+const show=id=>{document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')};
+const code=()=>Math.random().toString(36).slice(2,8).toUpperCase();
+function setStatus(id,msg){$(id).textContent=msg}
+function ready(){if(!sb){setStatus('setupStatus','Сначала вставь свой publishable key Supabase в файл.');return false}return true}
+async function createRoom(){
+ if(!ready())return;myName=$('nick').value.trim()||'Игрок';room=code();myIndex=0;
+ gameState={phase:'waiting',players:[{id:myId,name:myName,score:0,pressedAt:null}],round:1,targetMs:6000,startAt:null,results:null};
+ const {error}=await sb.from('game_rooms').insert({id:crypto.randomUUID(),nickname:myName,player_color:'orange',game:'good_countdown',status:'waiting',players:gameState.players,game_state:{...gameState,room_code:room}});
+ if(error){setStatus('setupStatus','Не удалось создать комнату: '+error.message);return}
+ await findRoom();openWaiting();
+}
+async function joinRoom(){
+ if(!ready())return;myName=$('nick').value.trim()||'Игрок';room=$('roomCode').value.trim().toUpperCase();
+ if(!room){setStatus('setupStatus','Введи код комнаты.');return}
+ const {data,error}=await sb.from('game_rooms').select('*').eq('game','good_countdown').eq('status','waiting').order('created_at',{ascending:false}).limit(30);
+ if(error){setStatus('setupStatus',error.message);return}
+ const found=(data||[]).find(x=>x.game_state?.room_code===room);
+ if(!found){setStatus('setupStatus','Комната не найдена или игра уже началась.');return}
+ const players=found.game_state.players||[];
+ if(players.length>=2){setStatus('setupStatus','В комнате уже два игрока.');return}
+ players.push({id:myId,name:myName,score:0,pressedAt:null});
+ const next={...found.game_state,players};
+ const up=await sb.from('game_rooms').update({players,game_state:next,status:'playing'}).eq('id',found.id);
+ if(up.error){setStatus('setupStatus',up.error.message);return}
+ roomId=found.id;gameState=next;myIndex=1;openWaiting();await subscribeRoom();
+}
+let roomId=null;
+async function findRoom(){
+ const {data,error}=await sb.from('game_rooms').select('*').eq('game','good_countdown').eq('status','waiting').order('created_at',{ascending:false}).limit(30);
+ if(error)throw error;
+ const found=(data||[]).find(x=>x.game_state?.room_code===room);
+ if(!found)throw new Error('Комната не найдена');
+ roomId=found.id;gameState=found.game_state;
+}
+function openWaiting(){$('codeView').textContent=room;show('waiting');$('waitingText').textContent=myIndex===0?'Отправь код другу и дождись подключения.':'Подключение выполнено.';subscribeRoom();startPolling()}
+async function subscribeRoom(){
+ if(!sb||!roomId)return;
+ if(channel)await sb.removeChannel(channel);
+ channel=sb.channel('room-'+roomId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'game_rooms',filter:'id=eq.'+roomId},payload=>{gameState=payload.new.game_state||gameState;renderState()}).subscribe();
+}
+function startPolling(){if(poll)clearInterval(poll);poll=setInterval(async()=>{if(!roomId||!sb)return;const {data}=await sb.from('game_rooms').select('game_state,status').eq('id',roomId).maybeSingle();if(data){gameState=data.game_state||gameState;renderState()}},900)}
+async function saveState(patch){gameState={...gameState,...patch};const {error}=await sb.from('game_rooms').update({game_state:gameState,players:gameState.players,status:gameState.phase==='finished'?'finished':'playing'}).eq('id',roomId);if(error)setStatus('gameStatus','Ошибка синхронизации: '+error.message)}
+function renderState(){
+ if(!gameState.players||gameState.players.length<2){show('waiting');return}
+ $('p1name').textContent=gameState.players[0].name;$('p2name').textContent=gameState.players[1].name;
+ $('p1score').textContent=gameState.players[0].score;$('p2score').textContent=gameState.players[1].score;
+ if(gameState.phase==='finished'){show('finished');const w=gameState.winner;$('winnerText').textContent='Победил '+gameState.players[w].name+'!';$('finishText').textContent='Счёт: '+gameState.players[0].score+' : '+gameState.players[1].score;return}
+ if(gameState.phase==='playing'){show('game');$('roundStatus').textContent='Раунд '+gameState.round+'. Отсчёт до нуля!';if(gameState.players[myIndex].pressedAt!==null){$('pressBtn').disabled=true;$('myStatus').textContent='Ты уже нажал. Ждём соперника…'}else if(Date.now()<(gameState.startAt||0)){$('pressBtn').disabled=true;$('myStatus').textContent='Приготовься… отсчёт скоро начнётся.'}else{$('pressBtn').disabled=false;$('myStatus').textContent='Нажми кнопку как можно ближе к нулю!'}animateTimer()}
+ else if(gameState.phase==='result'){show('game');$('pressBtn').disabled=true;const r=gameState.results;$('roundStatus').textContent=r&&r.winner>=0?'Раунд выиграл: '+gameState.players[r.winner].name:'Ничья в раунде';$('myStatus').textContent='Результат: '+(r?Math.round(r.diff[0])+' мс против '+Math.round(r.diff[1])+' мс':'');$('gameStatus').textContent='Следующий раунд начнётся через несколько секунд.';if(myIndex===0&&scheduledRound!==gameState.round){scheduledRound=gameState.round;setTimeout(()=>{if(gameState.phase==='result'&&gameState.players.every(p=>p.score<3)){pressed=false;beginNextRound()}},2500)}}
+}
+function animateTimer(){if(raf)cancelAnimationFrame(raf);const tick=()=>{if(!gameState.startAt||gameState.phase!=='playing')return;let elapsed=Math.max(0,Date.now()-gameState.startAt);let remain=Math.max(0,gameState.targetMs-elapsed);$('timer').textContent=(remain/1000).toFixed(2);$('meterFill').style.width=(Math.min(100,elapsed/gameState.targetMs*100))+'%';if(remain>0)raf=requestAnimationFrame(tick);else $('timer').textContent='0.00'};tick()}
+async function beginRound(){
+ if(myIndex!==0||gameState.players.length<2)return;
+ const players=gameState.players.map(p=>({...p,pressedAt:null}));
+ await saveState({phase:'playing',players,round:gameState.round||1,targetMs:6000,startAt:Date.now()+3000,results:null});
+}
+$('pressBtn').onclick=async()=>{
+ if(pressed||gameState.phase!=='playing'||Date.now()<(gameState.startAt||0)||gameState.players[myIndex].pressedAt!==null)return;
+ pressed=true;const elapsed=Date.now()-gameState.startAt;const players=gameState.players.map((p,i)=>i===myIndex?{...p,pressedAt:elapsed}:p);
+ $('pressBtn').disabled=true;await saveState({players});
+ if(players.every(p=>p.pressedAt!==null)){
+   const diff=players.map(p=>Math.abs(p.pressedAt-gameState.targetMs));
+   const winner=diff[0]===diff[1]?-1:(diff[0]<diff[1]?0:1);
+   const nextScores=players.map((p,i)=>({...p,score:p.score+(i===winner?1:0)}));
+   await saveState({phase:'result',players:nextScores,results:{winner,diff}});
+   if(winner>=0&&nextScores[winner].score>=3)setTimeout(()=>saveState({phase:'finished',players:nextScores,winner}),1400);
+ }
+};
+async function beginNextRound(){gameState.round++;await beginRound()}
+$('createBtn').onclick=createRoom;$('joinBtn').onclick=joinRoom;
+$('backBtn').onclick=()=>{if(poll)clearInterval(poll);show('setup')};
+$('rematchBtn').onclick=async()=>{if(myIndex!==0)return;const players=gameState.players.map(p=>({...p,score:0,pressedAt:null}));await saveState({phase:'playing',players,round:1,startAt:Date.now()+3000,results:null,winner:null});pressed=false;show('game');renderState()};
+$('exitBtn').onclick=()=>{if(poll)clearInterval(poll);show('setup')};
+setInterval(()=>{if(gameState.phase==='waiting'&&gameState.players?.length===2&&myIndex===0)beginRound()},1000);
+</script>
+</body>
+</html>
