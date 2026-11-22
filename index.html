@@ -2,283 +2,544 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>КотоPlay — игры онлайн</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-* {
-    box-sizing: border-box;
-}
+    <title>КотоPlay — Играй вместе с Котостями!</title>
 
-body {
-    margin: 0;
-    background: #1d120d;
-    color: #fff1e5;
-    font-family: Arial, sans-serif;
-}
+    <meta name="description" content="КотоPlay — портал собственных игр, приключений и сражений во вселенной Котостей.">
 
-header {
-    background: #321b10;
-    border-bottom: 1px solid #684027;
-    padding: 18px 7%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-}
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-.logo {
-    color: #ff963f;
-    font-size: 30px;
-    font-weight: bold;
-}
+        :root {
+            --background: #17100c;
+            --panel: #25170f;
+            --panel-light: #342016;
+            --orange: #ff963f;
+            --orange-dark: #b95620;
+            --text: #fff0df;
+            --muted: #b99a80;
+            --border: #70401f;
+        }
 
-nav {
-    display: flex;
-    gap: 22px;
-}
+        body {
+            min-height: 100vh;
+            background: var(--background);
+            color: var(--text);
+            font-family: Arial, sans-serif;
+        }
 
-nav a {
-    color: #ffe0c4;
-    text-decoration: none;
-}
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
 
-nav a:hover {
-    color: #ff963f;
-}
+        /* Шапка */
 
-.hero {
-    padding: 65px 7% 45px;
-    background: linear-gradient(120deg, #49230f, #25150e);
-}
+        header {
+            width: 100%;
+            background: #25150d;
+            border-bottom: 2px solid var(--orange-dark);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
 
-.hero h1 {
-    font-size: 42px;
-    margin: 0 0 12px;
-}
+        .header-inner {
+            max-width: 1200px;
+            margin: auto;
+            padding: 17px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
 
-.hero p {
-    color: #e8c5a8;
-    font-size: 18px;
-}
+        .logo {
+            font-size: 27px;
+            font-weight: bold;
+            color: var(--orange);
+            letter-spacing: 0.5px;
+        }
 
-.online {
-    display: inline-block;
-    margin-top: 15px;
-    padding: 10px 16px;
-    background: #382116;
-    border: 1px solid #754324;
-    border-radius: 20px;
-    color: #ffbd83;
-}
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            flex-wrap: wrap;
+        }
 
-main {
-    padding: 35px 7%;
-    max-width: 1250px;
-    margin: auto;
-}
+        nav a {
+            color: #e9c5a5;
+            font-size: 14px;
+            transition: color .2s;
+        }
 
-.section-title {
-    font-size: 27px;
-    margin: 15px 0 22px;
-}
+        nav a:hover {
+            color: var(--orange);
+        }
 
-.games-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 22px;
-}
+        /* Главный экран */
 
-.game-card {
-    background: #321e14;
-    border: 1px solid #694027;
-    border-radius: 18px;
-    overflow: hidden;
-    transition: 0.2s;
-}
+        .hero {
+            max-width: 1200px;
+            margin: auto;
+            padding: 75px 24px 55px;
+            text-align: center;
+        }
 
-.game-card:hover {
-    transform: translateY(-4px);
-    border-color: #ff963f;
-}
+        .hero-label {
+            display: inline-block;
+            color: #ffbd83;
+            background: #492817;
+            border: 1px solid #925027;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            margin-bottom: 22px;
+        }
 
-.game-cover {
-    height: 190px;
-    background: linear-gradient(135deg, #703713, #d36b25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 85px;
-}
+        .hero h1 {
+            font-size: clamp(36px, 6vw, 65px);
+            color: var(--orange);
+            margin-bottom: 18px;
+        }
 
-.battle-cover {
-    background: linear-gradient(135deg, #321b10, #8b351d, #d36b25);
-}
+        .hero p {
+            max-width: 650px;
+            margin: auto;
+            color: #d2b49b;
+            font-size: 18px;
+            line-height: 1.6;
+        }
 
-.game-info {
-    padding: 22px;
-}
+        .hero-button {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 15px 28px;
+            background: var(--orange-dark);
+            color: white;
+            border-radius: 11px;
+            font-weight: bold;
+            transition: .2s;
+        }
 
-.category {
-    color: #ffad6b;
-    font-size: 13px;
-}
+        .hero-button:hover {
+            background: #d66c2c;
+            transform: translateY(-2px);
+        }
 
-.game-info h3 {
-    font-size: 25px;
-    margin: 10px 0;
-}
+        /* Игры */
 
-.game-info p {
-    color: #d9bba3;
-    line-height: 1.5;
-}
+        .games-section {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px 24px 65px;
+        }
 
-.game-list {
-    color: #f5c69f;
-    line-height: 1.8;
-    padding-left: 20px;
-}
+        .section-heading {
+            margin-bottom: 25px;
+        }
 
-.play-button {
-    display: inline-block;
-    margin-top: 12px;
-    padding: 13px 25px;
-    background: #ff852b;
-    color: #29160c;
-    border-radius: 10px;
-    font-weight: bold;
-    text-decoration: none;
-    transition: 0.2s;
-}
+        .section-heading h2 {
+            color: #ffad65;
+            font-size: 29px;
+            margin-bottom: 8px;
+        }
 
-.play-button:hover {
-    background: #ffad65;
-}
+        .section-heading p {
+            color: var(--muted);
+            line-height: 1.5;
+        }
 
-.disabled-button {
-    display: inline-block;
-    margin-top: 12px;
-    padding: 13px 25px;
-    background: #61412d;
-    color: #d9bba3;
-    border-radius: 10px;
-    font-weight: bold;
-    cursor: default;
-}
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
 
-footer {
-    margin-top: 50px;
-    padding: 25px 7%;
-    background: #321b10;
-    border-top: 1px solid #684027;
-    color: #b9977d;
-    text-align: center;
-}
+        .game-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            overflow: hidden;
+            transition: transform .2s, border-color .2s;
+            display: flex;
+            flex-direction: column;
+        }
 
-@media (max-width: 600px) {
-    header {
-        flex-direction: column;
-    }
+        .game-card:hover {
+            transform: translateY(-4px);
+            border-color: #bd692e;
+        }
 
-    nav {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
+        .game-cover {
+            min-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
 
-    .hero h1 {
-        font-size: 32px;
-    }
-}
-</style>
+        .mini-cover {
+            background:
+                radial-gradient(circle at 20% 20%, #bd702d 0%, transparent 35%),
+                linear-gradient(135deg, #653619, #2b1b12 75%);
+        }
+
+        .duel-cover {
+            background:
+                radial-gradient(circle at 80% 20%, #d48b39 0%, transparent 30%),
+                linear-gradient(135deg, #733d24, #342016 75%);
+        }
+
+        .cover-emoji {
+            font-size: 90px;
+            filter: drop-shadow(0 10px 10px #170c08aa);
+            z-index: 1;
+        }
+
+        .cover-decoration {
+            position: absolute;
+            font-size: 35px;
+            opacity: .7;
+        }
+
+        .decoration-one {
+            top: 20px;
+            left: 25px;
+        }
+
+        .decoration-two {
+            bottom: 18px;
+            right: 28px;
+        }
+
+        .game-content {
+            padding: 23px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .game-category {
+            display: inline-block;
+            color: #ffb16f;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .game-content h3 {
+            font-size: 25px;
+            margin-bottom: 12px;
+        }
+
+        .game-description {
+            color: #c5a58b;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .game-features {
+            list-style: none;
+            display: grid;
+            gap: 8px;
+            margin-bottom: 23px;
+        }
+
+        .game-features li {
+            color: #e4c6a9;
+            font-size: 13px;
+        }
+
+        .game-features li::before {
+            content: "✓";
+            color: var(--orange);
+            margin-right: 9px;
+            font-weight: bold;
+        }
+
+        .game-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 13px 18px;
+            border-radius: 9px;
+            background: var(--orange-dark);
+            color: white;
+            font-weight: bold;
+            transition: .2s;
+            margin-top: auto;
+        }
+
+        .game-button:hover {
+            background: #d66c2c;
+        }
+
+        /* О КотоPlay */
+
+        .about {
+            max-width: 1152px;
+            margin: 0 auto 60px;
+            padding: 30px;
+            background: #25170f;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+        }
+
+        .about h2 {
+            color: var(--orange);
+            margin-bottom: 13px;
+        }
+
+        .about p {
+            color: #c5a58b;
+            line-height: 1.7;
+        }
+
+        /* Подвал */
+
+        footer {
+            background: #21140d;
+            border-top: 1px solid #56301a;
+            padding: 30px 20px;
+            text-align: center;
+            color: #a88a72;
+        }
+
+        .footer-logo {
+            color: var(--orange);
+            font-weight: bold;
+            font-size: 21px;
+            margin-bottom: 10px;
+        }
+
+        footer p {
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        /* Мобильная версия */
+
+        @media (max-width: 750px) {
+            .header-inner {
+                flex-direction: column;
+                padding: 15px;
+            }
+
+            nav {
+                justify-content: center;
+                gap: 15px;
+            }
+
+            .hero {
+                padding: 55px 18px 40px;
+            }
+
+            .games-section {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .game-cover {
+                min-height: 190px;
+            }
+
+            .about {
+                margin: 0 15px 40px;
+                padding: 22px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
 <header>
-    <div class="logo">🐱 КотоPlay</div>
+    <div class="header-inner">
 
-    <nav>
-        <a href="./">Главная</a>
-        <a href="#games">Игры</a>
-    </nav>
+        <a href="index.html" class="logo">
+            🐱 КотоPlay
+        </a>
+
+        <nav>
+            <a href="#games">Игры</a>
+            <a href="games.html">Мини-игры</a>
+            <a href="#about">О КотоPlay</a>
+        </nav>
+
+    </div>
 </header>
 
+
 <section class="hero">
+
+    <div class="hero-label">
+        🐾 Добро пожаловать во вселенную Котостей
+    </div>
+
     <h1>Играй вместе с КотоPlay!</h1>
-    <p>Собственные игры, приключения и сражения во вселенной Котостей.</p>
-    <div class="online">● КотоPlay развивается!</div>
+
+    <p>
+        Собственные игры, приключения и сражения
+        во вселенной Котостей.
+        Выбирай игру и отправляйся навстречу приключениям!
+    </p>
+
+    <a href="#games" class="hero-button">
+        Выбрать игру →
+    </a>
+
 </section>
 
-<main>
-    <h2 class="section-title" id="games">🎮 Игры КотоPlay</h2>
+
+<section class="games-section" id="games">
+
+    <div class="section-heading">
+        <h2>🎮 Наши игры</h2>
+        <p>
+            Играй в проекты КотоPlay и открывай новые приключения.
+        </p>
+    </div>
+
 
     <div class="games-grid">
 
-        <!-- Игра-сборник -->
-        <div class="game-card">
-            <div class="game-cover">🎲</div>
 
-            <div class="game-info">
-                <span class="category">ИГРА-СБОРНИК · 5 ИГР</span>
+        <!-- СБОРНИК МИНИ-ИГР -->
+
+        <article class="game-card">
+
+            <div class="game-cover mini-cover">
+
+                <span class="cover-decoration decoration-one">⭐</span>
+                <span class="cover-decoration decoration-two">🎯</span>
+
+                <div class="cover-emoji">
+                    🎮
+                </div>
+
+            </div>
+
+            <div class="game-content">
+
+                <span class="game-category">
+                    СБОРНИК · 5 ИГР
+                </span>
 
                 <h3>Мини-игры</h3>
 
-                <p>
-                    Собирайся с другими игроками в комнаты
-                    и играй в пять разных мини-игр!
+                <p class="game-description">
+                    Пять небольших игр в одном сборнике!
+                    Выбирай понравившуюся игру и проверяй свои навыки.
                 </p>
 
-                <ul class="game-list">
-                    <li>Камень, ножницы, бумага</li>
-                    <li>Палки и квадраты</li>
-                    <li>Крестики-нолики 5×5</li>
-                    <li>Морской бой</li>
-                    <li>Спички</li>
+                <ul class="game-features">
+                    <li>Пять игр в одном месте</li>
+                    <li>Разные игровые испытания</li>
+                    <li>Быстрые игровые сессии</li>
                 </ul>
 
-                <a class="play-button" href="games.html">
-                    Играть ▶
+                <a href="games.html" class="game-button">
+                    Играть →
                 </a>
+
             </div>
-        </div>
 
-        <!-- Новая игра -->
-        <div class="game-card">
-            <div class="game-cover battle-cover">⚔️</div>
+        </article>
 
-            <div class="game-info">
-                <span class="category">СТРАТЕГИЯ · В РАЗРАБОТКЕ</span>
 
-                <h3>Новая игра про Котостей</h3>
+        <!-- КОТОДУЭЛЬ -->
 
-                <p>
-                    Собирай золото, нанимай юнитов,
-                    развивай башню и сражайся
-                    с противниками!
+        <article class="game-card">
+
+            <div class="game-cover duel-cover">
+
+                <span class="cover-decoration decoration-one">⚔️</span>
+                <span class="cover-decoration decoration-two">🏰</span>
+
+                <div class="cover-emoji">
+                    🐱
+                </div>
+
+            </div>
+
+            <div class="game-content">
+
+                <span class="game-category">
+                    СТРАТЕГИЯ · 2D
+                </span>
+
+                <h3>КотоДуэль</h3>
+
+                <p class="game-description">
+                    Собери армию Котостей, добывай золото,
+                    улучшай свою башню и сражайся с противниками.
+                    Твоя главная цель — уничтожить вражескую башню!
                 </p>
 
-                <ul class="game-list">
-                    <li>Двухмерные сражения</li>
-                    <li>Добыча и улучшение золота</li>
-                    <li>Атака и оборона</li>
-                    <li>Новые юниты и боссы</li>
+                <ul class="game-features">
+                    <li>Добыча золота и развитие экономики</li>
+                    <li>Шахтёры и боевые коты</li>
+                    <li>Атака и защита</li>
+                    <li>Башни, противники и улучшения</li>
                 </ul>
 
-                <span class="disabled-button">
-                    Скоро...
-                </span>
+                <a href="kotoduel.html" class="game-button">
+                    Играть →
+                </a>
+
             </div>
-        </div>
+
+        </article>
+
 
     </div>
-</main>
+
+</section>
+
+
+<section class="about" id="about">
+
+    <h2>🐾 О КотоPlay</h2>
+
+    <p>
+        КотоPlay — игровой портал с собственными проектами
+        и играми во вселенной Котостей.
+        Здесь появляются новые приключения, игровые механики
+        и необычные идеи.
+    </p>
+
+</section>
+
 
 <footer>
-    <div>🐱 КотоPlay</div>
-    <p>© 2026 КотоPlay. Все права защищены.</p>
+
+    <div class="footer-logo">
+        🐱 КотоPlay
+    </div>
+
+    <p>
+        Играй, исследуй и открывай новые миры!
+    </p>
+
+    <p>
+        © КотоPlay
+    </p>
+
 </footer>
 
 </body>
