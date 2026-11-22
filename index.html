@@ -85,12 +85,17 @@ main {
     margin: 15px 0 22px;
 }
 
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 22px;
+}
+
 .game-card {
     background: #321e14;
     border: 1px solid #694027;
     border-radius: 18px;
     overflow: hidden;
-    max-width: 720px;
     transition: 0.2s;
 }
 
@@ -106,6 +111,10 @@ main {
     align-items: center;
     justify-content: center;
     font-size: 85px;
+}
+
+.battle-cover {
+    background: linear-gradient(135deg, #321b10, #8b351d, #d36b25);
 }
 
 .game-info {
@@ -149,22 +158,15 @@ main {
     background: #ffad65;
 }
 
-.soon {
-    margin-top: 55px;
-}
-
-.soon-card {
-    max-width: 720px;
-    padding: 25px;
-    background: #2b1a12;
-    border: 1px dashed #86502e;
-    border-radius: 16px;
+.disabled-button {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 13px 25px;
+    background: #61412d;
     color: #d9bba3;
-}
-
-.soon-card h3 {
-    color: #ffb174;
-    margin-top: 0;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: default;
 }
 
 footer {
@@ -200,58 +202,78 @@ footer {
 
     <nav>
         <a href="./">Главная</a>
-        <a href="games.html">Игры</a>
-        <a href="#soon">Скоро</a>
+        <a href="#games">Игры</a>
     </nav>
 </header>
 
 <section class="hero">
     <h1>Играй вместе с КотоPlay!</h1>
-    <p>Небольшие браузерные игры, в которые можно играть прямо на сайте.</p>
+    <p>Собственные игры, приключения и сражения во вселенной Котостей.</p>
     <div class="online">● КотоPlay развивается!</div>
 </section>
 
 <main>
-    <h2 class="section-title">🎮 Игры</h2>
+    <h2 class="section-title" id="games">🎮 Игры КотоPlay</h2>
 
-    <div class="game-card">
-        <div class="game-cover">🎲</div>
+    <div class="games-grid">
 
-        <div class="game-info">
-            <span class="category">ИГРАТЬ В БРАУЗЕРЕ</span>
+        <!-- Игра-сборник -->
+        <div class="game-card">
+            <div class="game-cover">🎲</div>
 
-            <h3>Мини онлайн игры</h3>
+            <div class="game-info">
+                <span class="category">ИГРА-СБОРНИК · 5 ИГР</span>
 
-            <p>
-                Собирайся с другими игроками в комнаты
-                и играй в небольшие игры!
-            </p>
+                <h3>Мини-игры</h3>
 
-            <ul class="game-list">
-                <li>Камень, ножницы, бумага</li>
-                <li>Палки и квадраты</li>
-                <li>Крестики-нолики 5×5</li>
-                <li>Морской бой</li>
-                <li>Спички</li>
-            </ul>
+                <p>
+                    Собирайся с другими игроками в комнаты
+                    и играй в пять разных мини-игр!
+                </p>
 
-            <a class="play-button" href="games.html">
-                Играть ▶
-            </a>
+                <ul class="game-list">
+                    <li>Камень, ножницы, бумага</li>
+                    <li>Палки и квадраты</li>
+                    <li>Крестики-нолики 5×5</li>
+                    <li>Морской бой</li>
+                    <li>Спички</li>
+                </ul>
+
+                <a class="play-button" href="games.html">
+                    Играть ▶
+                </a>
+            </div>
         </div>
+
+        <!-- Новая игра -->
+        <div class="game-card">
+            <div class="game-cover battle-cover">⚔️</div>
+
+            <div class="game-info">
+                <span class="category">СТРАТЕГИЯ · В РАЗРАБОТКЕ</span>
+
+                <h3>Новая игра про Котостей</h3>
+
+                <p>
+                    Собирай золото, нанимай юнитов,
+                    развивай башню и сражайся
+                    с противниками!
+                </p>
+
+                <ul class="game-list">
+                    <li>Двухмерные сражения</li>
+                    <li>Добыча и улучшение золота</li>
+                    <li>Атака и оборона</li>
+                    <li>Новые юниты и боссы</li>
+                </ul>
+
+                <span class="disabled-button">
+                    Скоро...
+                </span>
+            </div>
+        </div>
+
     </div>
-
-    <section class="soon" id="soon">
-        <h2 class="section-title">✨ Скоро</h2>
-
-        <div class="soon-card">
-            <h3>Новые игры уже в планах!</h3>
-            <p>
-                Здесь будут появляться новые проекты КотоPlay.
-                Заглядывай сюда позже!
-            </p>
-        </div>
-    </section>
 </main>
 
 <footer>
